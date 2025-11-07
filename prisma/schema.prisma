@@ -1,0 +1,155 @@
+// Schema do Prisma para Sistema SaaS Multiempresas
+// Gestão de Reclamações Mercado Livre
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum para tipos de usuário
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+// Enum para status de reclamações (preparado para futuro)
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// Tabela de Empresas/Clientes
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  cnpj      String?  @unique
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  users      User[]
+  mlAccounts MlAccount[]
+  complaints Complaint[]
+
+  @@map("companies")
+}
+
+// Tabela de Usuários
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CLIENT)
+  companyId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relações
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  accounts Account[]
+  sessions Session[]
+
+  @@index([email])
+  @@index([companyId])
+  @@map("users")
+}
+
+// Tabelas para NextAuth.js
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// MODELOS PREPARADOS PARA INTEGRAÇÃO FUTURA
+// ============================================
+
+// Tabela de Contas do Mercado Livre vinculadas a empresas
+// TODO: Implementar lógica de OAuth e refresh tokens quando integrar API ML
+model MlAccount {
+  id                  String   @id @default(cuid())
+  companyId           String
+  mercadoLivreUserId  String   @unique // ID do usuário no Mercado Livre
+  accessToken         String   @db.Text // Token de acesso (criptografado recomendado)
+  refreshToken        String   @db.Text // Token para renovação
+  expiresAt           DateTime // Data de expiração do access token
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relações
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("ml_accounts")
+}
+
+// Tabela de Reclamações/Claims do Mercado Livre
+// TODO: Sincronizar com API do Mercado Livre endpoint /claims
+model Complaint {
+  id              String          @id @default(cuid())
+  companyId       String
+  mlOrderId       String // ID do pedido no Mercado Livre
+  mlComplaintId   String          @unique // ID da reclamação no ML
+  clientName      String // Nome do cliente que reclamou
+  clientEmail     String? // E-mail do cliente (se disponível)
+  reason          String // Motivo da reclamação
+  description     String          @db.Text // Descrição detalhada
+  status          ComplaintStatus @default(PENDING)
+  mlStatus        String // Status original do ML para referência
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  resolvedAt      DateTime? // Data de resolução
+  mlCreatedAt     DateTime // Data de criação no ML
+  lastSyncAt      DateTime        @default(now()) // Última sincronização com ML
+
+  // Relações
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([status])
+  @@index([mlOrderId])
+  @@map("complaints")
+}
