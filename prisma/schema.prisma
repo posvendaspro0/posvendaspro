@@ -30,6 +30,21 @@ model Company {
   name      String
   cnpj      String?  @unique
   email     String   @unique
+  
+  // Dados do responsável
+  responsibleFirstName String?
+  responsibleLastName  String?
+  whatsapp            String?
+  
+  // Endereço
+  cep          String?
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

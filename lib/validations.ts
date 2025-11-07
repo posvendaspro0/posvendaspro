@@ -93,3 +93,70 @@ export const complaintSchema = z.object({
 
 export type ComplaintInput = z.infer<typeof complaintSchema>;
 
+// Schema para cadastro de empresa (self-service)
+export const registerCompanySchema = z.object({
+  firstName: z
+    .string()
+    .min(1, 'Nome é obrigatório')
+    .min(2, 'Nome deve ter no mínimo 2 caracteres')
+    .max(50, 'Nome deve ter no máximo 50 caracteres')
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, 'Nome deve conter apenas letras'),
+  lastName: z
+    .string()
+    .min(1, 'Sobrenome é obrigatório')
+    .min(2, 'Sobrenome deve ter no mínimo 2 caracteres')
+    .max(50, 'Sobrenome deve ter no máximo 50 caracteres')
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, 'Sobrenome deve conter apenas letras'),
+  companyName: z
+    .string()
+    .min(1, 'Nome da empresa é obrigatório')
+    .min(3, 'Nome da empresa deve ter no mínimo 3 caracteres')
+    .max(100, 'Nome da empresa deve ter no máximo 100 caracteres'),
+  email: z
+    .string()
+    .min(1, 'E-mail é obrigatório')
+    .email('E-mail inválido')
+    .toLowerCase(),
+  password: z
+    .string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Senha deve conter ao menos uma letra maiúscula')
+    .regex(/[a-z]/, 'Senha deve conter ao menos uma letra minúscula')
+    .regex(/[0-9]/, 'Senha deve conter ao menos um número')
+    .regex(/[^A-Za-z0-9]/, 'Senha deve conter ao menos um caractere especial'),
+  confirmPassword: z.string().min(1, 'Confirme sua senha'),
+  whatsapp: z
+    .string()
+    .min(1, 'WhatsApp é obrigatório')
+    .regex(/^\(\d{2}\) \d{5}-\d{4}$/, 'WhatsApp inválido. Use: (11) 99999-9999'),
+  cep: z
+    .string()
+    .min(1, 'CEP é obrigatório')
+    .regex(/^\d{5}-\d{3}$/, 'CEP inválido. Use: 00000-000'),
+  street: z
+    .string()
+    .min(1, 'Rua é obrigatória')
+    .min(3, 'Rua deve ter no mínimo 3 caracteres'),
+  number: z
+    .string()
+    .min(1, 'Número é obrigatório'),
+  complement: z.string().optional(),
+  neighborhood: z
+    .string()
+    .min(1, 'Bairro é obrigatório')
+    .min(2, 'Bairro deve ter no mínimo 2 caracteres'),
+  city: z
+    .string()
+    .min(1, 'Cidade é obrigatória')
+    .min(2, 'Cidade deve ter no mínimo 2 caracteres'),
+  state: z
+    .string()
+    .min(1, 'Estado é obrigatório')
+    .length(2, 'Use a sigla do estado (ex: SP)'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'As senhas não conferem',
+  path: ['confirmPassword'],
+});
+
+export type RegisterCompanyInput = z.infer<typeof registerCompanySchema>;
+

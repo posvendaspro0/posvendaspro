@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@/lib/validations';
 import { signIn } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
 
 /**
  * Componente de Formulário de Login
@@ -18,16 +20,34 @@ import { Loader2, AlertCircle } from 'lucide-react';
  * Autenticação via NextAuth.js
  */
 export function LoginForm() {
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
+
+  // Preencher email se vier do cadastro
+  useEffect(() => {
+    const email = searchParams.get('email');
+    const registered = searchParams.get('registered');
+    
+    if (email) {
+      setValue('email', email);
+    }
+    
+    if (registered === 'true') {
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
+    }
+  }, [searchParams, setValue]);
 
   const onSubmit = async (data: LoginInput) => {
     setError('');
@@ -74,6 +94,15 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {showSuccess && (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Cadastro realizado com sucesso! Faça login com suas credenciais.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -129,8 +158,20 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-slate-500">
-          <p>Credenciais padrão de teste:</p>
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600">
+            Não tem uma conta?{' '}
+            <Link 
+              href="/cadastro" 
+              className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              Cadastre sua empresa
+            </Link>
+          </p>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-slate-200 text-center text-sm text-slate-500">
+          <p className="font-semibold text-slate-600 mb-2">Credenciais de teste:</p>
           <p className="font-mono text-xs mt-1">
             Admin: admin@posvendaspro.com / Admin@123
           </p>
