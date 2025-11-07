@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerCompanySchema, type RegisterCompanyInput } from '@/lib/validations';
 import { useRouter } from 'next/navigation';
-import InputMask from 'react-input-mask';
+import { maskWhatsApp, maskCEP } from '@/lib/input-masks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -227,22 +227,18 @@ export function RegisterCompanyForm() {
           {/* WhatsApp */}
           <div className="space-y-2">
             <Label htmlFor="whatsapp">WhatsApp *</Label>
-            <InputMask
-              mask="(99) 99999-9999"
+            <Input
+              id="whatsapp"
+              type="tel"
+              placeholder="(11) 99999-9999"
               disabled={isLoading}
               {...register('whatsapp')}
-            >
-              {/* @ts-ignore */}
-              {(inputProps: any) => (
-                <Input
-                  {...inputProps}
-                  id="whatsapp"
-                  type="tel"
-                  placeholder="(11) 99999-9999"
-                  className={errors.whatsapp ? 'border-red-500' : ''}
-                />
-              )}
-            </InputMask>
+              onChange={(e) => {
+                const masked = maskWhatsApp(e.target.value);
+                setValue('whatsapp', masked);
+              }}
+              className={errors.whatsapp ? 'border-red-500' : ''}
+            />
             {errors.whatsapp && (
               <p className="text-xs text-red-500">{errors.whatsapp.message}</p>
             )}
@@ -338,21 +334,17 @@ export function RegisterCompanyForm() {
             <Label htmlFor="cep">CEP *</Label>
             <div className="flex gap-2">
               <div className="flex-1">
-                <InputMask
-                  mask="99999-999"
+                <Input
+                  id="cep"
+                  placeholder="00000-000"
                   disabled={isLoading}
                   {...register('cep')}
-                >
-                  {/* @ts-ignore */}
-                  {(inputProps: any) => (
-                    <Input
-                      {...inputProps}
-                      id="cep"
-                      placeholder="00000-000"
-                      className={errors.cep ? 'border-red-500' : ''}
-                    />
-                  )}
-                </InputMask>
+                  onChange={(e) => {
+                    const masked = maskCEP(e.target.value);
+                    setValue('cep', masked);
+                  }}
+                  className={errors.cep ? 'border-red-500' : ''}
+                />
               </div>
               <Button
                 type="button"
