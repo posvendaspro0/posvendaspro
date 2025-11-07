@@ -76,6 +76,12 @@ Guia completo de toda a documentação do projeto.
    - Debugging
    - Reset completo
 
+10. **[GITHUB.md](./GITHUB.md)** 🐙
+   - Repositório no GitHub
+   - Como clonar o projeto
+   - Trabalhando com Git
+   - CI/CD e automações
+
 ---
 
 ## 🎯 Fluxo de Leitura Recomendado
