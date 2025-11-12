@@ -6,7 +6,7 @@
 
 Substituímos "Reclamações" por "Tickets" com todos os campos que você pediu:
 
-1. **ID** - Gerado automaticamente
+1. **ID** - Definido manualmente pelo cliente (ex: TICKET-001, MLB-12345)
 2. **Status** - Pendente, Em Andamento, Resolvido, Fechado
 3. **Responsável** - Nome do responsável pelo atendimento
 4. **Data da Reclamação** - Data de criação
@@ -60,12 +60,17 @@ npm run dev
 2. Clique em **"Novo Ticket"**
 3. Preencha os campos:
 
-**Informações Básicas**:
+**ID e Status**:
+- **ID do Ticket**: TICKET-001 (você escolhe o ID!)
 - Status: Pendente
 - Responsável: João Silva
+
+**Produto**:
 - ID Pedido ML: MLB1234567890 (opcional)
 - SKU: SKU-TESTE-001
 - Tipo de Problema: Produto com defeito
+
+**Descrição**:
 - Observação: Cliente relatou que o produto chegou com defeito na embalagem...
 
 **Informações de Resolução**:
@@ -80,10 +85,10 @@ npm run dev
 
 4. Clique em **"Criar Ticket"**
 
-### Passo 3: Visualizar Lista
+### Passo 3: Visualizar e Editar
 
 Você verá a tabela com TODAS as informações:
-- ID resumido
+- **ID completo** (o que você digitou, ex: TICKET-001)
 - Status colorido
 - Responsável
 - Data de criação
@@ -93,7 +98,13 @@ Você verá a tabela com TODAS as informações:
 - Custo em R$
 - Ícone de reputação (verde = não afetou, vermelho = afetou)
 - Tempo em horas
-- Botões de ações (visualizar/editar)
+- **Botões de ações**: ícone de olho (visualizar) e lápis (editar)
+
+**Para editar um ticket**:
+1. Clique no ícone de lápis ✏️
+2. Altere os campos necessários
+3. O ID não pode ser alterado (fica desabilitado)
+4. Clique em "Salvar Alterações"
 
 ---
 
