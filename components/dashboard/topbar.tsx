@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Building2, User, Settings } from 'lucide-react';
 import { SignOutButton } from '@/components/sign-out-button';
+import Link from 'next/link';
 
 /**
  * Topbar do Dashboard CLIENT
@@ -73,14 +74,18 @@ export async function DashboardTopbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              Perfil
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              Configurações
-            </DropdownMenuItem>
+            <Link href="/dashboard/perfil">
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                Meu Perfil
+              </DropdownMenuItem>
+            </Link>
+            <Link href="/dashboard/configuracoes">
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                Configurações
+              </DropdownMenuItem>
+            </Link>
             <DropdownMenuSeparator />
             <SignOutButton />
           </DropdownMenuContent>
