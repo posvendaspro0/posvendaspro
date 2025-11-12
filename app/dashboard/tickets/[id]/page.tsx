@@ -130,9 +130,11 @@ export default async function VisualizarTicketPage({
                 <span className="font-medium">Data da Reclamação</span>
               </div>
               <p className="text-slate-900">
-                {format(new Date(ticket.complaintDate), "dd/MM/yyyy 'às' HH:mm", {
-                  locale: ptBR,
-                })}
+                {ticket.complaintDate 
+                  ? format(new Date(ticket.complaintDate), "dd/MM/yyyy 'às' HH:mm", {
+                      locale: ptBR,
+                    })
+                  : 'Não informada'}
               </p>
             </div>
 
