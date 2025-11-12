@@ -19,10 +19,10 @@ export default async function RelatoriosPage() {
       </div>
 
       {/* Card de "Em Breve" */}
-      <Card className="border-2 border-dashed border-slate-300">
+      <Card className="border border-slate-200">
         <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-6 mb-6">
-            <BarChart3 className="h-12 w-12 text-white" />
+          <div className="rounded-full bg-slate-100 p-6 mb-6">
+            <BarChart3 className="h-12 w-12 text-slate-600" />
           </div>
           
           <h2 className="text-2xl font-bold text-slate-900 mb-2">
@@ -35,9 +35,9 @@ export default async function RelatoriosPage() {
 
           {/* Preview de Recursos */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 w-full max-w-4xl">
-            <div className="bg-slate-50 rounded-lg p-4 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-3">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
+                <TrendingUp className="h-6 w-6 text-slate-600" />
               </div>
               <h3 className="font-semibold text-slate-900 mb-1">
                 Análise de Tendências
@@ -47,9 +47,9 @@ export default async function RelatoriosPage() {
               </p>
             </div>
 
-            <div className="bg-slate-50 rounded-lg p-4 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-3">
-                <Calendar className="h-6 w-6 text-green-600" />
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
+                <Calendar className="h-6 w-6 text-slate-600" />
               </div>
               <h3 className="font-semibold text-slate-900 mb-1">
                 Tempo de Resolução
@@ -59,9 +59,9 @@ export default async function RelatoriosPage() {
               </p>
             </div>
 
-            <div className="bg-slate-50 rounded-lg p-4 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-purple-100 mb-3">
-                <DollarSign className="h-6 w-6 text-purple-600" />
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
+                <DollarSign className="h-6 w-6 text-slate-600" />
               </div>
               <h3 className="font-semibold text-slate-900 mb-1">
                 Custos de Resolução
@@ -71,9 +71,9 @@ export default async function RelatoriosPage() {
               </p>
             </div>
 
-            <div className="bg-slate-50 rounded-lg p-4 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-100 mb-3">
-                <BarChart3 className="h-6 w-6 text-orange-600" />
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
+                <BarChart3 className="h-6 w-6 text-slate-600" />
               </div>
               <h3 className="font-semibold text-slate-900 mb-1">
                 Tipos de Problemas
@@ -86,7 +86,7 @@ export default async function RelatoriosPage() {
 
           <div className="mt-8 text-center">
             <p className="text-sm text-slate-500">
-              💡 <span className="font-medium">Dica:</span> Continue cadastrando seus tickets para ter dados ricos em seus relatórios!
+              <span className="font-medium">Dica:</span> Continue cadastrando seus tickets para ter dados ricos em seus relatórios!
             </p>
           </div>
         </CardContent>

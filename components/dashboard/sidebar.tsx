@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
   AlertCircle, 
-  Settings,
   BarChart3,
   Link as LinkIcon,
   Users
@@ -42,11 +41,6 @@ const navigation = [
     name: 'Integração ML',
     href: '/dashboard/integracao',
     icon: LinkIcon,
-  },
-  {
-    name: 'Configurações',
-    href: '/dashboard/configuracoes',
-    icon: Settings,
   },
 ];
 
