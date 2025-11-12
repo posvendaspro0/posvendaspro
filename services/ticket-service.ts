@@ -7,6 +7,7 @@ import { Ticket, TicketStatus, ProblemType, Prisma } from '@prisma/client';
  */
 
 export interface CreateTicketData {
+  id: string; // ID customizado pelo usuário
   companyId: string;
   status: TicketStatus;
   responsible?: string;
@@ -80,8 +81,21 @@ export async function getTicketById(id: string, companyId: string) {
  */
 export async function createTicket(data: CreateTicketData): Promise<Ticket> {
   try {
+    // Verificar se já existe ticket com mesmo ID na empresa
+    const existingTicket = await prisma.ticket.findFirst({
+      where: {
+        id: data.id,
+        companyId: data.companyId,
+      },
+    });
+
+    if (existingTicket) {
+      throw new Error('Já existe um ticket com este ID');
+    }
+
     const ticket = await prisma.ticket.create({
       data: {
+        id: data.id, // ID customizado
         companyId: data.companyId,
         status: data.status,
         responsible: data.responsible || null,

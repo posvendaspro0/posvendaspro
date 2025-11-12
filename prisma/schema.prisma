@@ -155,7 +155,7 @@ model MlAccount {
 // Tabela de Tickets (antiga Complaints/Reclamações)
 // Gestão manual de tickets com integração futura ao Mercado Livre
 model Ticket {
-  id               String       @id @default(cuid())
+  id               String       @id // ID customizado pelo usuário
   companyId        String
   
   // Informações básicas

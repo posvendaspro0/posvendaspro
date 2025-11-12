@@ -75,6 +75,7 @@ export async function POST(request: Request) {
 
     // Preparar dados para criação
     const ticket = await createTicket({
+      id: data.id, // ID customizado pelo usuário
       companyId: session.user.companyId,
       status: data.status as TicketStatus,
       responsible: data.responsible,

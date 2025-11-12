@@ -88,7 +88,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">ID</TableHead>
+              <TableHead className="w-[140px]">ID</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Responsável</TableHead>
               <TableHead>Data</TableHead>
@@ -107,8 +107,8 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
               
               return (
                 <TableRow key={ticket.id}>
-                  <TableCell className="font-mono text-xs">
-                    {ticket.id.slice(0, 8)}
+                  <TableCell className="font-mono text-xs font-medium">
+                    {ticket.id}
                   </TableCell>
                   <TableCell>
                     <Badge className={status.color}>

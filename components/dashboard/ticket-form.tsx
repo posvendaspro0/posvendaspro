@@ -112,6 +112,30 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
             </Alert>
           )}
 
+          {/* ID do Ticket */}
+          <div className="space-y-2">
+            <Label htmlFor="id">ID do Ticket *</Label>
+            <Input
+              id="id"
+              placeholder="Ex: TICKET-001, MLB-12345, etc"
+              disabled={isLoading || mode === 'edit'}
+              {...register('id')}
+              className={errors.id ? 'border-red-500' : ''}
+            />
+            {errors.id && (
+              <p className="text-sm text-red-500">{errors.id.message}</p>
+            )}
+            {mode === 'edit' ? (
+              <p className="text-xs text-slate-500">
+                O ID não pode ser alterado após criação
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500">
+                Digite um identificador único para este ticket
+              </p>
+            )}
+          </div>
+
           {/* Status e Responsável */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
