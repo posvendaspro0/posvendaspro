@@ -1,277 +1,315 @@
-# PósVendas Pro
+# 🎯 PosVendas Pro
 
-Sistema SaaS multiempresas para gestão de reclamações do Mercado Livre.
+**Sistema SaaS Multi-empresa para Gestão de Reclamações do Mercado Livre**
 
-> **📚 [Ver Índice Completo de Documentação](./DOCS.md)**  
-> **🚀 [Início Rápido (5 minutos)](./INICIO_RAPIDO.md)**
+Sistema profissional de gerenciamento de tickets (reclamações) para empresas que vendem no Mercado Livre, com suporte multi-tenant, autenticação robusta e interface moderna.
 
 ---
 
-## 📋 Sobre o Projeto
+## 🚀 **Tecnologias Utilizadas**
 
-O **PósVendas Pro** é uma plataforma completa que permite a gestão centralizada de reclamações do Mercado Livre para múltiplas empresas. O sistema oferece dois perfis de acesso:
+### **Frontend**
+- ⚛️ **Next.js 15** - App Router
+- 🎨 **React 19** - UI Components
+- 🔷 **TypeScript** - Type Safety
+- 🎭 **Tailwind CSS** - Styling
+- 🧩 **shadcn/ui** - Component Library
+- 📝 **React Hook Form** - Formulários
+- ✅ **Zod** - Validação
 
-- **ADMIN**: Administrador do sistema, com acesso total para gerenciar empresas e usuários
-- **CLIENT**: Empresas cadastradas que visualizam e gerenciam suas próprias reclamações
+### **Backend**
+- 🔒 **NextAuth.js v5** - Autenticação
+- 🗄️ **Prisma ORM** - Database
+- 🐘 **PostgreSQL (Neon)** - Cloud Database
+- 🔐 **bcryptjs** - Hash de Senhas
+- 🔑 **JWT** - Token Management
 
-## 🚀 Tecnologias
+### **Infraestrutura**
+- ☁️ **Vercel** - Deployment & Hosting
+- 🌐 **GitHub** - Version Control
 
-- **Framework**: Next.js 16 (App Router)
-- **Linguagem**: TypeScript
-- **Autenticação**: NextAuth.js v5 (sem middleware, proteção em nível de página)
-- **Banco de Dados**: PostgreSQL (Neon)
-- **ORM**: Prisma
-- **Estilização**: Tailwind CSS
-- **Componentes**: shadcn/ui
-- **Validação**: Zod + React Hook Form
-- **Deploy**: Vercel (recomendado)
-- **E-mail**: Brevo (preparado para integração)
-- **API Externa**: Mercado Livre (preparado para integração)
+---
 
-## 📦 Instalação
+## 📋 **Funcionalidades Principais**
 
-### Pré-requisitos
+### ✅ **Autenticação e Autorização**
+- Login seguro com NextAuth.js v5
+- Dois níveis de acesso:
+  - **ADMIN**: Super administrador do sistema
+  - **CLIENT**: Administrador de empresa
+- Cadastro de novas empresas
+- Multi-tenancy (isolamento de dados por empresa)
 
-- Node.js 18+ 
-- npm ou yarn
-- Conta no Neon (PostgreSQL)
+### ✅ **Gestão de Tickets**
+- CRUD completo de tickets de reclamação
+- Campos: ID, Status, Responsável, Data da Reclamação, SKU do Produto, Tipo de Problema, Observação, Data de Resolução, Custo, Afetou Reputação
+- Cálculo automático do tempo de resolução
+- Filtros e busca
+- Interface intuitiva com tabelas responsivas
 
-### Passo a Passo
+### ✅ **Gestão de Operadores**
+- CRUD de operadores por empresa
+- Controle de acesso e permissões
+- Ativação/Desativação de contas
+- Senhas criptografadas com bcrypt
 
-1. **Clone o repositório** (se aplicável) ou navegue até a pasta do projeto:
+### ✅ **Perfil Completo**
+- Dados pessoais do usuário
+- Dados da empresa (CNPJ, endereço completo)
+- Alteração de senha
+- Estatísticas rápidas (tickets, operadores)
+- Máscara automática para WhatsApp, CEP e CNPJ
+- Busca automática de endereço via ViaCEP
+
+### 🔜 **Em Desenvolvimento**
+- **Relatórios**: Análise de tendências, tempo de resolução, etc.
+- **Integração Mercado Livre**: Importação automática de reclamações
+- **Notificações**: Email via Brevo (transactional)
+
+---
+
+## 🎨 **Design System**
+
+- **Paleta de Cores**: Neutro profissional (slate)
+- **Tipografia**: Sistema otimizado para legibilidade
+- **Layout**: Responsivo e acessível
+- **Componentes**: shadcn/ui (Radix UI + Tailwind)
+- **UX**: Feedback visual, loading states, mensagens toast
+
+---
+
+## 📦 **Instalação e Configuração**
+
+### **1. Clone o Repositório**
 
 ```bash
+git clone https://github.com/posvendaspro0/posvendaspro.git
 cd posvendaspro
 ```
 
-2. **Instale as dependências**:
+### **2. Instale as Dependências**
 
 ```bash
 npm install
 ```
 
-3. **Configure as variáveis de ambiente**:
+### **3. Configure as Variáveis de Ambiente**
 
-Crie um arquivo `.env` na raiz do projeto baseado no `.env.example`:
+Crie um arquivo `.env` na raiz do projeto:
 
-```bash
-# Database (Neon PostgreSQL)
-DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
+```env
+# Database
+DATABASE_URL="sua_url_do_neon_postgresql"
 
-# NextAuth.js
+# NextAuth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="sua-chave-secreta-aqui"
-
-# Brevo (Email Transacional) - OPCIONAL
-BREVO_API_KEY="sua-api-key-do-brevo-aqui"
-
-# Mercado Livre API (OAuth) - OPCIONAL (para futura integração)
-MERCADOLIVRE_CLIENT_ID="seu-client-id-aqui"
-MERCADOLIVRE_CLIENT_SECRET="seu-client-secret-aqui"
-MERCADOLIVRE_REDIRECT_URI="http://localhost:3000/api/auth/callback/mercadolivre"
+NEXTAUTH_SECRET="sua_chave_secreta_forte_aqui"
 ```
 
-**Importante**: 
-- Gere o `NEXTAUTH_SECRET` com: `openssl rand -base64 32`
-- Obtenha o `DATABASE_URL` em [console.neon.tech](https://console.neon.tech/)
+**Gerar NEXTAUTH_SECRET:**
+```bash
+openssl rand -base64 32
+```
 
-4. **Execute as migrações do Prisma**:
+### **4. Configure o Banco de Dados**
 
 ```bash
+# Executar migrations
 npx prisma migrate dev
+
+# Gerar Prisma Client
+npx prisma generate
+
+# Seed inicial (cria admin)
+npx prisma db seed
 ```
 
-5. **Execute o seed para criar usuário admin**:
+**Credenciais do Admin Padrão:**
+- Email: `admin@posvendas.com`
+- Senha: `Admin@123456`
 
-```bash
-npm run prisma:seed
-```
-
-Isso criará:
-- **Usuário ADMIN**: 
-  - Email: `admin@posvendaspro.com`
-  - Senha: `Admin@123`
-- **Empresa de exemplo**: Empresa Exemplo
-- **Usuário CLIENT de exemplo**:
-  - Email: `cliente@exemplo.com`
-  - Senha: `Cliente@123`
-
-6. **Inicie o servidor de desenvolvimento**:
+### **5. Inicie o Servidor de Desenvolvimento**
 
 ```bash
 npm run dev
 ```
 
-7. **Acesse o sistema**:
-
-Abra [http://localhost:3000](http://localhost:3000) no navegador.
-
-## 🔑 Credenciais de Teste
-
-Após executar o seed, você pode fazer login com:
-
-### Administrador
-- **E-mail**: admin@posvendaspro.com
-- **Senha**: Admin@123
-
-### Cliente (Empresa Exemplo)
-- **E-mail**: cliente@exemplo.com
-- **Senha**: Cliente@123
-
-## 📂 Estrutura do Projeto
-
-```
-posvendaspro/
-├── app/                          # Rotas e páginas (App Router)
-│   ├── admin/                    # Dashboard administrativo
-│   │   ├── empresas/            # CRUD de empresas
-│   │   └── layout.tsx           # Layout do admin
-│   ├── dashboard/               # Dashboard do cliente
-│   │   ├── reclamacoes/        # Listagem de reclamações
-│   │   └── layout.tsx          # Layout do cliente
-│   ├── login/                   # Página de login
-│   └── api/                     # API Routes
-│       ├── auth/                # NextAuth endpoints
-│       └── companies/           # API de empresas
-├── components/                  # Componentes React
-│   ├── ui/                     # Componentes shadcn/ui
-│   ├── admin/                  # Componentes do admin
-│   └── dashboard/              # Componentes do cliente
-├── lib/                        # Utilitários e configurações
-│   ├── prisma.ts              # Cliente Prisma
-│   ├── auth-utils.ts          # Funções de autenticação
-│   ├── validations.ts         # Schemas Zod
-│   └── utils.ts               # Utilitários gerais
-├── prisma/                     # Configuração Prisma
-│   ├── schema.prisma          # Schema do banco
-│   └── seed.ts                # Script de seed
-├── services/                   # Lógica de negócio
-│   ├── company-service.ts     # Serviço de empresas
-│   ├── user-service.ts        # Serviço de usuários
-│   ├── mercadolivre-service.ts # Integração ML (preparado)
-│   └── email-service.ts       # Envio de e-mails (preparado)
-├── types/                      # Definições TypeScript
-│   ├── index.ts               # Tipos principais
-│   └── next-auth.d.ts         # Tipos do NextAuth
-└── auth.ts                     # Configuração NextAuth
-```
-
-## 🎯 Funcionalidades Implementadas
-
-### ✅ Autenticação
-- [x] Login com email e senha
-- [x] Proteção de rotas por role (ADMIN/CLIENT)
-- [x] Sessões seguras com JWT
-- [x] Redirecionamento automático baseado em perfil
-
-### ✅ Dashboard ADMIN
-- [x] Visão geral do sistema
-- [x] Listagem de empresas
-- [x] Criar nova empresa
-- [x] Editar empresa
-- [x] Visualizar estatísticas
-
-### ✅ Dashboard CLIENT
-- [x] Visão geral de reclamações
-- [x] Estatísticas por status
-- [x] Listagem de reclamações (mockada)
-- [x] Interface preparada para integração ML
-
-### ✅ Infraestrutura
-- [x] Banco de dados estruturado
-- [x] API Routes funcionais
-- [x] Validação de formulários
-- [x] Componentes reutilizáveis
-- [x] Layout responsivo
-
-## 🔮 Próximos Passos
-
-### Integração Mercado Livre
-Os serviços estão preparados em `services/mercadolivre-service.ts`:
-
-1. Implementar OAuth flow
-2. Sincronização de reclamações
-3. Atualização de status
-4. Envio de mensagens
-
-### Integração Brevo (E-mail)
-Os serviços estão preparados em `services/email-service.ts`:
-
-1. Configurar API key
-2. Criar templates de e-mail
-3. Implementar notificações automáticas
-4. Relatórios periódicos
-
-### Melhorias Futuras
-- [ ] Sistema de notificações em tempo real
-- [ ] Filtros avançados de reclamações
-- [ ] Exportação de relatórios (PDF/Excel)
-- [ ] Dashboard com gráficos
-- [ ] Sistema de recuperação de senha
-- [ ] Histórico de alterações
-- [ ] Webhooks do Mercado Livre
-
-## 🛠️ Scripts Disponíveis
-
-```bash
-# Desenvolvimento
-npm run dev              # Inicia servidor de desenvolvimento
-
-# Prisma
-npm run prisma:generate  # Gera Prisma Client
-npm run prisma:migrate   # Executa migrações
-npm run prisma:seed      # Executa seed do banco
-npm run prisma:studio    # Abre Prisma Studio (GUI)
-
-# Produção
-npm run build           # Build para produção
-npm start              # Inicia servidor de produção
-
-# Qualidade de código
-npm run lint           # Executa linter
-```
-
-## 🚀 Deploy
-
-### Vercel (Recomendado)
-
-1. Faça push do código para GitHub/GitLab
-2. Importe o projeto na Vercel
-3. Configure as variáveis de ambiente
-4. Deploy automático!
-
-### Variáveis de Ambiente (Produção)
-
-Certifique-se de configurar todas as variáveis no painel da Vercel:
-- `DATABASE_URL`
-- `NEXTAUTH_URL` (sua URL de produção)
-- `NEXTAUTH_SECRET`
-- `BREVO_API_KEY` (quando implementado)
-- `MERCADOLIVRE_CLIENT_ID` (quando implementado)
-- `MERCADOLIVRE_CLIENT_SECRET` (quando implementado)
-
-## 📖 Guia de Desenvolvimento
-
-Para informações detalhadas sobre arquitetura, padrões e como adicionar novas features, consulte [DEVELOPMENT.md](./DEVELOPMENT.md).
-
-## 🤝 Contribuindo
-
-1. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
-2. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
-3. Push para a branch (`git push origin feature/MinhaFeature`)
-4. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto é privado e proprietário.
-
-## 🆘 Suporte
-
-Para dúvidas ou problemas:
-- Consulte a documentação técnica em `DEVELOPMENT.md`
-- Verifique os comentários no código
-- Entre em contato com a equipe de desenvolvimento
+Acesse: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-**Desenvolvido com ❤️ para gestão eficiente de reclamações do Mercado Livre**
+## 🗂️ **Estrutura do Projeto**
+
+```
+posvendaspro/
+├── app/                          # Next.js App Router
+│   ├── api/                      # API Routes
+│   │   ├── auth/                 # NextAuth endpoints
+│   │   ├── companies/            # CRUD empresas
+│   │   ├── operators/            # CRUD operadores
+│   │   ├── profile/              # Atualização de perfil
+│   │   ├── register/             # Cadastro
+│   │   └── tickets/              # CRUD tickets
+│   ├── admin/                    # Dashboard Admin
+│   ├── dashboard/                # Dashboard Cliente
+│   │   ├── tickets/              # Gestão de Tickets
+│   │   ├── operadores/           # Gestão de Operadores
+│   │   ├── perfil/               # Perfil Completo
+│   │   ├── relatorios/           # (Em breve)
+│   │   └── integracao/           # (Em breve)
+│   ├── cadastro/                 # Página de cadastro
+│   ├── login/                    # Página de login
+│   └── layout.tsx                # Root layout
+├── components/                   # Componentes React
+│   ├── admin/                    # Componentes do Admin
+│   ├── dashboard/                # Componentes do Cliente
+│   └── ui/                       # shadcn/ui components
+├── lib/                          # Bibliotecas e utilitários
+│   ├── auth-helpers.ts           # Proteção de rotas
+│   ├── auth-utils.ts             # Hash/validação senhas
+│   ├── input-masks.ts            # Máscaras de input
+│   ├── prisma.ts                 # Prisma Client
+│   ├── utils.ts                  # Utilitários gerais
+│   └── validations.ts            # Schemas Zod
+├── prisma/                       # Prisma ORM
+│   ├── migrations/               # Database migrations
+│   ├── schema.prisma             # Schema do banco
+│   └── seed.ts                   # Dados iniciais
+├── services/                     # Serviços de negócio
+│   ├── company-service.ts        # Lógica de empresas
+│   ├── operator-service.ts       # Lógica de operadores
+│   ├── ticket-service.ts         # Lógica de tickets
+│   └── user-service.ts           # Lógica de usuários
+├── types/                        # TypeScript types
+│   ├── index.ts                  # Types gerais
+│   └── next-auth.d.ts            # Types do NextAuth
+├── auth.ts                       # Configuração NextAuth
+├── reiniciar-servidor.bat        # Script de reinício
+└── package.json                  # Dependências
+```
+
+---
+
+## 🔐 **Segurança**
+
+- ✅ Senhas criptografadas com bcrypt (salt rounds: 10)
+- ✅ Proteção de rotas com middleware NextAuth
+- ✅ Validação de dados com Zod
+- ✅ SQL Injection protegido (Prisma ORM)
+- ✅ CSRF Protection (NextAuth)
+- ✅ Multi-tenancy com isolamento de dados
+- ✅ Variáveis de ambiente para segredos
+
+---
+
+## 📊 **Banco de Dados**
+
+### **Models:**
+- `User` - Usuários do sistema
+- `Company` - Empresas cadastradas
+- `MlAccount` - Contas Mercado Livre (futuro)
+- `Ticket` - Tickets de reclamação
+- `Operator` - Operadores por empresa
+
+### **Relações:**
+- Um `User` pertence a uma `Company`
+- Uma `Company` possui vários `Users`, `Operators`, `Tickets` e `MlAccounts`
+- Cascade delete para manter integridade referencial
+
+---
+
+## 🛠️ **Comandos Úteis**
+
+```bash
+# Desenvolvimento
+npm run dev                    # Inicia servidor dev
+
+# Build
+npm run build                  # Build para produção
+npm start                      # Inicia servidor prod
+
+# Database
+npx prisma studio              # Interface gráfica do DB
+npx prisma migrate dev         # Criar/aplicar migration
+npx prisma generate            # Gerar Prisma Client
+npx prisma db seed             # Popular banco
+
+# Reinício completo (Windows)
+./reiniciar-servidor.bat       # Limpa cache e reinicia
+
+# Git
+git add .
+git commit -m "mensagem"
+git push origin main
+```
+
+---
+
+## 🌐 **Deploy**
+
+### **Vercel (Recomendado)**
+
+1. **Conecte o repositório GitHub à Vercel**
+2. **Configure as variáveis de ambiente:**
+   - `DATABASE_URL`
+   - `NEXTAUTH_URL` (URL de produção)
+   - `NEXTAUTH_SECRET`
+3. **Deploy automático** a cada push na branch `main`
+
+---
+
+## 📝 **Convenções de Código**
+
+- **Components**: PascalCase (`TicketForm.tsx`)
+- **Files**: kebab-case (`ticket-service.ts`)
+- **Functions**: camelCase (`createTicket()`)
+- **Types/Interfaces**: PascalCase (`TicketInput`)
+- **Constants**: UPPER_SNAKE_CASE (`MAX_TICKETS`)
+- **Commits**: Conventional Commits
+  - `feat:` - Nova funcionalidade
+  - `fix:` - Correção de bug
+  - `refactor:` - Refatoração
+  - `docs:` - Documentação
+  - `style:` - Formatação
+  - `chore:` - Tarefas de manutenção
+
+---
+
+## 🤝 **Contribuindo**
+
+Este é um projeto privado. Para contribuir:
+
+1. Crie uma branch: `git checkout -b feature/nova-funcionalidade`
+2. Commit suas mudanças: `git commit -m 'feat: adiciona nova funcionalidade'`
+3. Push para a branch: `git push origin feature/nova-funcionalidade`
+4. Abra um Pull Request
+
+---
+
+## 📄 **Licença**
+
+Proprietary - Todos os direitos reservados © 2024 PosVendas Pro
+
+---
+
+## 👨‍💻 **Suporte**
+
+Para dúvidas ou problemas, entre em contato:
+- **Email**: suporte@posvendaspro.com
+- **GitHub Issues**: https://github.com/posvendaspro0/posvendaspro/issues
+
+---
+
+## 🎉 **Status do Projeto**
+
+✅ **MVP Completo e Funcional**
+
+Próximas Releases:
+- 📊 Sistema de Relatórios
+- 🔗 Integração Mercado Livre API
+- 📧 Notificações por Email (Brevo)
+- 📱 App Mobile (React Native)
+
+---
+
+**Desenvolvido com ❤️ usando Next.js e React**
