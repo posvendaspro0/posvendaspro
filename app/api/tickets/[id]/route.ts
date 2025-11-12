@@ -145,7 +145,11 @@ export async function DELETE(
       );
     }
 
+    console.log('Tentando deletar ticket:', params.id, 'da empresa:', session.user.companyId);
+
     await deleteTicket(params.id, session.user.companyId);
+
+    console.log('Ticket deletado com sucesso:', params.id);
 
     return NextResponse.json({ success: true, message: 'Ticket deletado com sucesso' });
   } catch (error) {
