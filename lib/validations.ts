@@ -202,3 +202,46 @@ export const registerCompanySchema = z.object({
 
 export type RegisterCompanyInput = z.infer<typeof registerCompanySchema>;
 
+// Schema de validação para criação de operador
+export const operatorSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Nome é obrigatório')
+    .min(3, 'Nome deve ter no mínimo 3 caracteres')
+    .max(100, 'Nome deve ter no máximo 100 caracteres'),
+  email: z
+    .string()
+    .min(1, 'E-mail é obrigatório')
+    .email('E-mail inválido')
+    .toLowerCase(),
+  password: z
+    .string()
+    .min(6, 'Senha deve ter no mínimo 6 caracteres')
+    .max(100, 'Senha deve ter no máximo 100 caracteres'),
+});
+
+export type OperatorInput = z.infer<typeof operatorSchema>;
+
+// Schema para atualização de operador (senha opcional)
+export const updateOperatorSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Nome é obrigatório')
+    .min(3, 'Nome deve ter no mínimo 3 caracteres')
+    .max(100, 'Nome deve ter no máximo 100 caracteres'),
+  email: z
+    .string()
+    .min(1, 'E-mail é obrigatório')
+    .email('E-mail inválido')
+    .toLowerCase(),
+  password: z
+    .string()
+    .min(6, 'Senha deve ter no mínimo 6 caracteres')
+    .max(100, 'Senha deve ter no máximo 100 caracteres')
+    .optional()
+    .or(z.literal('')),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateOperatorInput = z.infer<typeof updateOperatorSchema>;
+

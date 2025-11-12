@@ -8,7 +8,8 @@ import {
   AlertCircle, 
   Settings,
   BarChart3,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Users
 } from 'lucide-react';
 
 /**
@@ -26,6 +27,11 @@ const navigation = [
     name: 'Tickets',
     href: '/dashboard/tickets',
     icon: AlertCircle,
+  },
+  {
+    name: 'Operadores',
+    href: '/dashboard/operadores',
+    icon: Users,
   },
   {
     name: 'Relatórios',

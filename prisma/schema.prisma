@@ -63,6 +63,7 @@ model Company {
   users      User[]
   mlAccounts MlAccount[]
   tickets    Ticket[]
+  operators  Operator[]
 
   @@map("companies")
 }
@@ -194,4 +195,25 @@ model Ticket {
   @@index([mlOrderId])
   @@index([createdAt])
   @@map("tickets")
+}
+
+// Tabela de Operadores
+// Pessoas que gerenciam os tickets de uma empresa
+model Operator {
+  id           String   @id @default(cuid())
+  companyId    String
+  name         String
+  email        String
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relações
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, email]) // Email único dentro de cada empresa
+  @@index([companyId])
+  @@index([email])
+  @@map("operators")
 }
