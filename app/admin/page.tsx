@@ -11,10 +11,10 @@ export default async function AdminDashboard() {
   // Garantir que apenas ADMINs acessem
   await requireAdmin();
   // Buscar estatísticas do sistema
-  const [totalCompanies, totalUsers, totalComplaints] = await Promise.all([
+  const [totalCompanies, totalUsers, totalTickets] = await Promise.all([
     prisma.company.count(),
     prisma.user.count({ where: { role: 'CLIENT' } }),
-    prisma.complaint.count(),
+    prisma.ticket.count(),
   ]);
 
   const stats = [
@@ -33,15 +33,15 @@ export default async function AdminDashboard() {
       bgColor: 'bg-green-100',
     },
     {
-      title: 'Total de Reclamações',
-      value: totalComplaints,
+      title: 'Total de Tickets',
+      value: totalTickets,
       icon: AlertCircle,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
     },
     {
       title: 'Taxa de Resolução',
-      value: totalComplaints > 0 ? '0%' : '-',
+      value: totalTickets > 0 ? '0%' : '-',
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',

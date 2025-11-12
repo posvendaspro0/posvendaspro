@@ -23,8 +23,8 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
-    name: 'Reclamações',
-    href: '/dashboard/reclamacoes',
+    name: 'Tickets',
+    href: '/dashboard/tickets',
     icon: AlertCircle,
   },
   {

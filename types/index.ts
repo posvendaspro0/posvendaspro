@@ -1,7 +1,7 @@
-import { Role, ComplaintStatus } from '@prisma/client';
+import { Role, TicketStatus, ProblemType } from '@prisma/client';
 
 // Re-exportar enums do Prisma para facilitar importação
-export { Role, ComplaintStatus };
+export { Role, TicketStatus, ProblemType };
 
 // Tipos para sessão customizada do NextAuth
 export interface SessionUser {
@@ -31,7 +31,7 @@ export interface Company {
 export interface CompanyWithUsers extends Company {
   users: User[];
   _count?: {
-    complaints: number;
+    tickets: number;
     mlAccounts: number;
   };
 }
@@ -51,26 +51,30 @@ export interface UserWithCompany extends User {
   company?: Company | null;
 }
 
-// Tipos para reclamações (preparado para integração ML)
-export interface Complaint {
+// Tipos para tickets
+export interface Ticket {
   id: string;
   companyId: string;
-  mlOrderId: string;
-  mlComplaintId: string;
-  clientName: string;
+  status: TicketStatus;
+  responsible?: string | null;
+  mlOrderId?: string | null;
+  productSku?: string | null;
+  problemType: ProblemType;
+  observation: string;
+  resolutionDate?: Date | null;
+  resolutionCost?: number | null;
+  affectedReputation: boolean;
+  resolutionTime?: number | null;
+  mlComplaintId?: string | null;
+  mlStatus?: string | null;
+  clientName?: string | null;
   clientEmail?: string | null;
-  reason: string;
-  description: string;
-  status: ComplaintStatus;
-  mlStatus: string;
   createdAt: Date;
   updatedAt: Date;
-  resolvedAt?: Date | null;
-  mlCreatedAt: Date;
-  lastSyncAt: Date;
+  lastSyncAt?: Date | null;
 }
 
-export interface ComplaintWithCompany extends Complaint {
+export interface TicketWithCompany extends Ticket {
   company: Company;
 }
 
@@ -106,16 +110,16 @@ export interface UserFormData {
 
 // Tipos para estatísticas
 export interface DashboardStats {
-  totalComplaints: number;
-  pendingComplaints: number;
-  inProgressComplaints: number;
-  resolvedComplaints: number;
+  totalTickets: number;
+  pendingTickets: number;
+  inProgressTickets: number;
+  resolvedTickets: number;
 }
 
 export interface AdminStats {
   totalCompanies: number;
   totalUsers: number;
-  totalComplaints: number;
+  totalTickets: number;
   activeCompanies: number;
 }
 

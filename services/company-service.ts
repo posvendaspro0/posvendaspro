@@ -28,7 +28,7 @@ export async function getAllCompanies() {
         _count: {
           select: {
             users: true,
-            complaints: true,
+            tickets: true,
             mlAccounts: true,
           },
         },
@@ -64,7 +64,7 @@ export async function getCompanyById(id: string) {
         },
         _count: {
           select: {
-            complaints: true,
+            tickets: true,
             mlAccounts: true,
           },
         },
@@ -206,13 +206,13 @@ export async function deleteCompany(id: string): Promise<void> {
  */
 export async function getCompanyStats(companyId: string) {
   try {
-    const [totalUsers, totalComplaints, mlAccounts] = await Promise.all([
+    const [totalUsers, totalTickets, mlAccounts] = await Promise.all([
       prisma.user.count({ where: { companyId } }),
-      prisma.complaint.count({ where: { companyId } }),
+      prisma.ticket.count({ where: { companyId } }),
       prisma.mlAccount.count({ where: { companyId } }),
     ]);
 
-    const complaintsByStatus = await prisma.complaint.groupBy({
+    const ticketsByStatus = await prisma.ticket.groupBy({
       by: ['status'],
       where: { companyId },
       _count: true,
@@ -220,9 +220,9 @@ export async function getCompanyStats(companyId: string) {
 
     return {
       totalUsers,
-      totalComplaints,
+      totalTickets,
       mlAccounts,
-      complaintsByStatus,
+      ticketsByStatus,
     };
   } catch (error) {
     console.error('Erro ao buscar estatísticas da empresa:', error);

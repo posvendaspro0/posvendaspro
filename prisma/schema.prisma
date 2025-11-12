@@ -16,12 +16,23 @@ enum Role {
   CLIENT
 }
 
-// Enum para status de reclamações (preparado para futuro)
-enum ComplaintStatus {
+// Enum para status de tickets
+enum TicketStatus {
   PENDING
   IN_PROGRESS
   RESOLVED
   CLOSED
+}
+
+// Enum para tipo de problema
+enum ProblemType {
+  PRODUCT_NOT_RECEIVED
+  PRODUCT_DEFECTIVE
+  WRONG_PRODUCT
+  LATE_DELIVERY
+  DAMAGED_PACKAGE
+  RETURN_REQUEST
+  OTHER
 }
 
 // Tabela de Empresas/Clientes
@@ -51,7 +62,7 @@ model Company {
   // Relações
   users      User[]
   mlAccounts MlAccount[]
-  complaints Complaint[]
+  tickets    Ticket[]
 
   @@map("companies")
 }
@@ -141,24 +152,38 @@ model MlAccount {
   @@map("ml_accounts")
 }
 
-// Tabela de Reclamações/Claims do Mercado Livre
-// TODO: Sincronizar com API do Mercado Livre endpoint /claims
-model Complaint {
-  id              String          @id @default(cuid())
-  companyId       String
-  mlOrderId       String // ID do pedido no Mercado Livre
-  mlComplaintId   String          @unique // ID da reclamação no ML
-  clientName      String // Nome do cliente que reclamou
-  clientEmail     String? // E-mail do cliente (se disponível)
-  reason          String // Motivo da reclamação
-  description     String          @db.Text // Descrição detalhada
-  status          ComplaintStatus @default(PENDING)
-  mlStatus        String // Status original do ML para referência
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  resolvedAt      DateTime? // Data de resolução
-  mlCreatedAt     DateTime // Data de criação no ML
-  lastSyncAt      DateTime        @default(now()) // Última sincronização com ML
+// Tabela de Tickets (antiga Complaints/Reclamações)
+// Gestão manual de tickets com integração futura ao Mercado Livre
+model Ticket {
+  id               String       @id @default(cuid())
+  companyId        String
+  
+  // Informações básicas
+  status           TicketStatus @default(PENDING)
+  responsible      String? // Nome do responsável pelo atendimento
+  
+  // Informações do pedido/produto
+  mlOrderId        String? // ID do pedido no Mercado Livre (futuro)
+  productSku       String? // SKU do produto
+  problemType      ProblemType // Tipo do problema
+  observation      String       @db.Text // Observações/descrição detalhada
+  
+  // Informações de resolução
+  resolutionDate   DateTime? // Data da resolução
+  resolutionCost   Decimal?     @db.Decimal(10, 2) // Custo da resolução (R$)
+  affectedReputation Boolean   @default(false) // Afetou a reputação no ML
+  resolutionTime   Int? // Tempo de resolução em horas
+  
+  // Dados do Mercado Livre (para integração futura)
+  mlComplaintId    String? @unique // ID da reclamação no ML
+  mlStatus         String? // Status original do ML
+  clientName       String? // Nome do cliente
+  clientEmail      String? // E-mail do cliente
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  lastSyncAt       DateTime? // Última sincronização com ML (futuro)
 
   // Relações
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -166,5 +191,6 @@ model Complaint {
   @@index([companyId])
   @@index([status])
   @@index([mlOrderId])
-  @@map("complaints")
+  @@index([createdAt])
+  @@map("tickets")
 }

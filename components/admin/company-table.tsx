@@ -24,7 +24,7 @@ interface Company {
   createdAt: Date;
   _count: {
     users: number;
-    complaints: number;
+    tickets: number;
     mlAccounts: number;
   };
 }
@@ -60,7 +60,7 @@ export function CompanyTable({ companies }: CompanyTableProps) {
             <TableHead>E-mail</TableHead>
             <TableHead>CNPJ</TableHead>
             <TableHead className="text-center">Usuários</TableHead>
-            <TableHead className="text-center">Reclamações</TableHead>
+            <TableHead className="text-center">Tickets</TableHead>
             <TableHead>Cadastro</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -82,7 +82,7 @@ export function CompanyTable({ companies }: CompanyTableProps) {
               <TableCell className="text-center">
                 <Badge variant="outline" className="gap-1">
                   <AlertCircle className="h-3 w-3" />
-                  {company._count.complaints}
+                  {company._count.tickets}
                 </Badge>
               </TableCell>
               <TableCell className="text-slate-600">

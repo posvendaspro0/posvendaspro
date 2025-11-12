@@ -82,16 +82,52 @@ export const updateUserSchema = userSchema.extend({
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 
-// Schema para reclamação (preparado para futura integração)
-export const complaintSchema = z.object({
-  mlOrderId: z.string().min(1, 'ID do pedido é obrigatório'),
-  clientName: z.string().min(1, 'Nome do cliente é obrigatório'),
-  clientEmail: z.string().email('E-mail inválido').optional(),
-  reason: z.string().min(1, 'Motivo é obrigatório'),
-  description: z.string().min(1, 'Descrição é obrigatória'),
+// Schema para criação de ticket
+export const ticketSchema = z.object({
+  status: z.enum(['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], {
+    errorMap: () => ({ message: 'Status inválido' }),
+  }),
+  responsible: z.string().optional(),
+  mlOrderId: z.string().optional(),
+  productSku: z.string().optional(),
+  problemType: z.enum([
+    'PRODUCT_NOT_RECEIVED',
+    'PRODUCT_DEFECTIVE',
+    'WRONG_PRODUCT',
+    'LATE_DELIVERY',
+    'DAMAGED_PACKAGE',
+    'RETURN_REQUEST',
+    'OTHER',
+  ], {
+    errorMap: () => ({ message: 'Tipo de problema inválido' }),
+  }),
+  observation: z
+    .string()
+    .min(1, 'Observação é obrigatória')
+    .min(10, 'Observação deve ter no mínimo 10 caracteres'),
+  resolutionDate: z.string().optional(),
+  resolutionCost: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, { message: 'Custo deve ser um número válido' }),
+  affectedReputation: z.boolean().default(false),
+  resolutionTime: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      const num = parseInt(val, 10);
+      return !isNaN(num) && num >= 0;
+    }, { message: 'Tempo deve ser um número válido' }),
+  clientName: z.string().optional(),
+  clientEmail: z.string().email('E-mail inválido').optional().or(z.literal('')),
 });
 
-export type ComplaintInput = z.infer<typeof complaintSchema>;
+export type TicketInput = z.infer<typeof ticketSchema>;
 
 // Schema para cadastro de empresa (self-service)
 export const registerCompanySchema = z.object({

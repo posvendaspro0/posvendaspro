@@ -16,25 +16,25 @@ export default async function ClientDashboard() {
   }
 
   // Buscar estatísticas reais da empresa
-  const totalComplaints = await prisma.complaint.count({
+  const totalTickets = await prisma.ticket.count({
     where: { companyId: session.user.companyId },
   });
 
-  const pendingComplaints = await prisma.complaint.count({
+  const pendingTickets = await prisma.ticket.count({
     where: {
       companyId: session.user.companyId,
       status: 'PENDING',
     },
   });
 
-  const inProgressComplaints = await prisma.complaint.count({
+  const inProgressTickets = await prisma.ticket.count({
     where: {
       companyId: session.user.companyId,
       status: 'IN_PROGRESS',
     },
   });
 
-  const resolvedComplaints = await prisma.complaint.count({
+  const resolvedTickets = await prisma.ticket.count({
     where: {
       companyId: session.user.companyId,
       status: 'RESOLVED',
@@ -43,29 +43,29 @@ export default async function ClientDashboard() {
 
   const stats = [
     {
-      title: 'Total de Reclamações',
-      value: totalComplaints,
+      title: 'Total de Tickets',
+      value: totalTickets,
       icon: AlertCircle,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
     },
     {
       title: 'Pendentes',
-      value: pendingComplaints,
+      value: pendingTickets,
       icon: Clock,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
     },
     {
       title: 'Em Andamento',
-      value: inProgressComplaints,
+      value: inProgressTickets,
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
     },
     {
-      title: 'Resolvidas',
-      value: resolvedComplaints,
+      title: 'Resolvidos',
+      value: resolvedTickets,
       icon: CheckCircle,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
@@ -77,7 +77,7 @@ export default async function ClientDashboard() {
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
         <p className="text-slate-500 mt-1">
-          Acompanhe suas reclamações do Mercado Livre
+          Acompanhe seus tickets de atendimento
         </p>
       </div>
 
@@ -112,7 +112,7 @@ export default async function ClientDashboard() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-sm text-slate-600">
-                Para começar a sincronizar suas reclamações, conecte sua conta do Mercado Livre.
+                Para começar a sincronizar seus tickets automaticamente, conecte sua conta do Mercado Livre.
               </p>
               <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
@@ -128,13 +128,13 @@ export default async function ClientDashboard() {
             <CardTitle>Últimas Atualizações</CardTitle>
           </CardHeader>
           <CardContent>
-            {totalComplaints === 0 ? (
+            {totalTickets === 0 ? (
               <p className="text-sm text-slate-500">
-                Nenhuma reclamação ainda. Conecte sua conta do Mercado Livre para começar.
+                Nenhum ticket cadastrado. Comece criando um novo ticket manualmente.
               </p>
             ) : (
               <p className="text-sm text-slate-500">
-                Suas reclamações estão atualizadas.
+                Você tem {totalTickets} {totalTickets === 1 ? 'ticket cadastrado' : 'tickets cadastrados'}.
               </p>
             )}
           </CardContent>
