@@ -34,13 +34,16 @@ export function DeleteTicketButton({ ticketId }: DeleteTicketButtonProps) {
     setIsDeleting(true);
 
     try {
+      console.log('Deletando ticket:', ticketId);
+      
       const response = await fetch(`/api/tickets/${ticketId}`, {
         method: 'DELETE',
       });
 
-      const result = await response.json();
+      console.log('Response status:', response.status);
 
       if (!response.ok) {
+        const result = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
         throw new Error(result.error || 'Erro ao excluir ticket');
       }
 
@@ -50,7 +53,8 @@ export function DeleteTicketButton({ ticketId }: DeleteTicketButtonProps) {
       router.refresh();
     } catch (err) {
       console.error('Erro ao excluir ticket:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao excluir ticket');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao excluir ticket';
+      setError(errorMessage);
       setIsDeleting(false);
     }
   };

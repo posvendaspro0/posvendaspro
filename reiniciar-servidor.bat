@@ -4,15 +4,19 @@ echo    REINICIANDO SERVIDOR POSVENDAS PRO
 echo ========================================
 echo.
 
-echo [1/3] Parando processos Node.js...
+echo [1/4] Parando processos Node.js...
 taskkill /F /IM node.exe >nul 2>&1
-timeout /t 2 >nul
+timeout /t 3 >nul
 
-echo [2/3] Gerando Prisma Client...
+echo [2/4] Limpando cache do Next.js...
+if exist .next rmdir /s /q .next
+timeout /t 1 >nul
+
+echo [3/4] Gerando Prisma Client...
 call npx prisma generate
 
 echo.
-echo [3/3] Iniciando servidor...
+echo [4/4] Iniciando servidor...
 echo.
 echo Servidor iniciando em http://localhost:3000
 echo Pressione Ctrl+C para parar
