@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { maskWhatsApp, maskCEP } from '@/lib/input-masks';
+import { maskWhatsApp, maskCEP, maskCNPJ, unmask } from '@/lib/input-masks';
 
 const profileCompanySchema = z.object({
   name: z
@@ -18,7 +18,17 @@ const profileCompanySchema = z.object({
     .min(1, 'Nome da empresa é obrigatório')
     .min(3, 'Nome deve ter no mínimo 3 caracteres')
     .max(100, 'Nome deve ter no máximo 100 caracteres'),
-  cnpj: z.string().optional(),
+  cnpj: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true; // Permite vazio
+        const cleanCnpj = val.replace(/\D/g, '');
+        return cleanCnpj.length === 14;
+      },
+      { message: 'CNPJ deve ter 14 dígitos' }
+    ),
   email: z
     .string()
     .min(1, 'E-mail é obrigatório')
@@ -61,6 +71,8 @@ export function ProfileCompanyForm({ company }: ProfileCompanyFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [cnpjError, setCnpjError] = useState<string | null>(null);
   const router = useRouter();
 
   const {
@@ -90,6 +102,37 @@ export function ProfileCompanyForm({ company }: ProfileCompanyFormProps) {
 
   const whatsapp = watch('whatsapp');
   const cep = watch('cep');
+  const cnpj = watch('cnpj');
+
+  // Buscar endereço pelo CEP
+  const handleCepBlur = async () => {
+    if (!cep) return;
+
+    const cleanCep = unmask(cep);
+    if (cleanCep.length !== 8) return;
+
+    setIsLoadingCep(true);
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+
+      if (data.erro) {
+        throw new Error('CEP não encontrado');
+      }
+
+      // Preencher campos automaticamente
+      setValue('street', data.logradouro, { shouldDirty: true });
+      setValue('neighborhood', data.bairro, { shouldDirty: true });
+      setValue('city', data.localidade, { shouldDirty: true });
+      setValue('state', data.uf, { shouldDirty: true });
+      setValue('complement', data.complemento || '', { shouldDirty: true });
+    } catch (err) {
+      console.error('Erro ao buscar CEP:', err);
+    } finally {
+      setIsLoadingCep(false);
+    }
+  };
 
   const onSubmit = async (data: ProfileCompanyInput) => {
     setIsLoading(true);
@@ -164,8 +207,20 @@ export function ProfileCompanyForm({ company }: ProfileCompanyFormProps) {
               id="cnpj"
               placeholder="00.000.000/0000-00"
               disabled={isLoading}
-              {...register('cnpj')}
+              value={cnpj || ''}
+              onChange={(e) => {
+                const masked = maskCNPJ(e.target.value);
+                setValue('cnpj', masked, { shouldDirty: true });
+                setCnpjError(null);
+              }}
+              className={cnpjError ? 'border-red-500' : ''}
             />
+            {cnpjError && (
+              <p className="text-sm text-red-500">{cnpjError}</p>
+            )}
+            <p className="text-xs text-slate-500">
+              Digite apenas os números do CNPJ
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -228,13 +283,22 @@ export function ProfileCompanyForm({ company }: ProfileCompanyFormProps) {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="cep">CEP</Label>
-            <Input
-              id="cep"
-              placeholder="00000-000"
-              disabled={isLoading}
-              value={cep || ''}
-              onChange={(e) => setValue('cep', maskCEP(e.target.value), { shouldDirty: true })}
-            />
+            <div className="relative">
+              <Input
+                id="cep"
+                placeholder="00000-000"
+                disabled={isLoading || isLoadingCep}
+                value={cep || ''}
+                onChange={(e) => setValue('cep', maskCEP(e.target.value), { shouldDirty: true })}
+                onBlur={handleCepBlur}
+              />
+              {isLoadingCep && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
+              )}
+            </div>
+            <p className="text-xs text-slate-500">
+              {isLoadingCep ? 'Buscando endereço...' : 'Digite o CEP para buscar o endereço automaticamente'}
+            </p>
           </div>
 
           <div className="space-y-2 md:col-span-2">
