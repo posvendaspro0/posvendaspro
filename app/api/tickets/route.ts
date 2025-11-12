@@ -79,6 +79,7 @@ export async function POST(request: Request) {
       companyId: session.user.companyId,
       status: data.status as TicketStatus,
       responsible: data.responsible,
+      complaintDate: new Date(data.complaintDate),
       mlOrderId: data.mlOrderId,
       productSku: data.productSku,
       problemType: data.problemType as ProblemType,

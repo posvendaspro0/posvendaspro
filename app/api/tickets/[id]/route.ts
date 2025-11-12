@@ -89,6 +89,7 @@ export async function PUT(
     const ticket = await updateTicket(params.id, session.user.companyId, {
       status: data.status as TicketStatus | undefined,
       responsible: data.responsible,
+      complaintDate: data.complaintDate ? new Date(data.complaintDate) : undefined,
       mlOrderId: data.mlOrderId,
       productSku: data.productSku,
       problemType: data.problemType as ProblemType | undefined,

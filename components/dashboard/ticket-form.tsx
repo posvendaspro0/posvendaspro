@@ -136,6 +136,24 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
             )}
           </div>
 
+          {/* Data da Reclamação */}
+          <div className="space-y-2">
+            <Label htmlFor="complaintDate">Data da Reclamação *</Label>
+            <Input
+              id="complaintDate"
+              type="date"
+              disabled={isLoading}
+              {...register('complaintDate')}
+              className={errors.complaintDate ? 'border-red-500' : ''}
+            />
+            {errors.complaintDate && (
+              <p className="text-sm text-red-500">{errors.complaintDate.message}</p>
+            )}
+            <p className="text-xs text-slate-500">
+              Data em que a reclamação foi registrada
+            </p>
+          </div>
+
           {/* Status e Responsável */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

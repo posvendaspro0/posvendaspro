@@ -93,6 +93,7 @@ export const ticketSchema = z.object({
     errorMap: () => ({ message: 'Status inválido' }),
   }),
   responsible: z.string().optional(),
+  complaintDate: z.string().min(1, 'Data da reclamação é obrigatória'),
   mlOrderId: z.string().optional(),
   productSku: z.string().optional(),
   problemType: z.enum([

@@ -21,6 +21,7 @@ interface Ticket {
   id: string;
   status: TicketStatus;
   responsible: string | null;
+  complaintDate: Date;
   productSku: string | null;
   problemType: ProblemType;
   observation: string;
@@ -91,7 +92,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
               <TableHead className="w-[140px]">ID</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Responsável</TableHead>
-              <TableHead>Data</TableHead>
+              <TableHead>Data Reclamação</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Data Resolução</TableHead>
@@ -119,7 +120,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                     {ticket.responsible || '-'}
                   </TableCell>
                   <TableCell className="text-slate-600">
-                    {format(new Date(ticket.createdAt), 'dd/MM/yyyy', {
+                    {format(new Date(ticket.complaintDate), 'dd/MM/yyyy', {
                       locale: ptBR,
                     })}
                   </TableCell>

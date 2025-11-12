@@ -38,6 +38,7 @@ export default async function EditarTicketPage({
           id: ticket.id,
           status: ticket.status,
           responsible: ticket.responsible || '',
+          complaintDate: new Date(ticket.complaintDate).toISOString().split('T')[0],
           mlOrderId: ticket.mlOrderId || '',
           productSku: ticket.productSku || '',
           problemType: ticket.problemType,

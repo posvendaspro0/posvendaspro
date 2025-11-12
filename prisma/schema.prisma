@@ -161,6 +161,7 @@ model Ticket {
   // Informações básicas
   status           TicketStatus @default(PENDING)
   responsible      String? // Nome do responsável pelo atendimento
+  complaintDate    DateTime @default(now()) // Data da reclamação
   
   // Informações do pedido/produto
   mlOrderId        String? // ID do pedido no Mercado Livre (futuro)

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "tickets" ADD COLUMN     "complaintDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

@@ -11,6 +11,7 @@ export interface CreateTicketData {
   companyId: string;
   status: TicketStatus;
   responsible?: string;
+  complaintDate: Date; // Data da reclamação
   mlOrderId?: string;
   productSku?: string;
   problemType: ProblemType;
@@ -26,6 +27,7 @@ export interface CreateTicketData {
 export interface UpdateTicketData {
   status?: TicketStatus;
   responsible?: string;
+  complaintDate?: Date;
   mlOrderId?: string;
   productSku?: string;
   problemType?: ProblemType;
@@ -99,6 +101,7 @@ export async function createTicket(data: CreateTicketData): Promise<Ticket> {
         companyId: data.companyId,
         status: data.status,
         responsible: data.responsible || null,
+        complaintDate: data.complaintDate,
         mlOrderId: data.mlOrderId || null,
         productSku: data.productSku || null,
         problemType: data.problemType,
@@ -143,10 +146,35 @@ export async function updateTicket(
       throw new Error('Ticket não encontrado');
     }
 
+    // Calcular tempo de resolução automaticamente se status mudar para RESOLVED ou CLOSED
+    let autoResolutionTime = data.resolutionTime;
+    let autoResolutionDate = data.resolutionDate;
+
+    if (data.status && (data.status === 'RESOLVED' || data.status === 'CLOSED')) {
+      // Se não forneceu data de resolução, usar agora
+      if (!autoResolutionDate) {
+        autoResolutionDate = new Date();
+      }
+
+      // Calcular tempo em horas entre complaintDate e resolutionDate
+      const complaintDate = data.complaintDate || existingTicket.complaintDate;
+      const resolutionDate = autoResolutionDate;
+      
+      const diffInMs = resolutionDate.getTime() - complaintDate.getTime();
+      const diffInHours = Math.round(diffInMs / (1000 * 60 * 60));
+      
+      // Se não forneceu tempo manualmente, calcular automaticamente
+      if (!autoResolutionTime) {
+        autoResolutionTime = diffInHours >= 0 ? diffInHours : 0;
+      }
+    }
+
     const ticket = await prisma.ticket.update({
       where: { id },
       data: {
         ...data,
+        resolutionDate: autoResolutionDate,
+        resolutionTime: autoResolutionTime,
         resolutionCost: data.resolutionCost ? new Prisma.Decimal(data.resolutionCost) : undefined,
       },
     });
