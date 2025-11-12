@@ -10,7 +10,7 @@ import { ProblemType, TicketStatus } from '@prisma/client';
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -29,7 +29,8 @@ export async function GET(
       );
     }
 
-    const ticket = await getTicketById(params.id, session.user.companyId);
+    const { id } = await params;
+    const ticket = await getTicketById(id, session.user.companyId);
 
     if (!ticket) {
       return NextResponse.json(
@@ -54,7 +55,7 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -86,7 +87,8 @@ export async function PUT(
 
     const data = validation.data;
 
-    const ticket = await updateTicket(params.id, session.user.companyId, {
+    const { id } = await params;
+    const ticket = await updateTicket(id, session.user.companyId, {
       status: data.status as TicketStatus | undefined,
       responsible: data.responsible,
       complaintDate: data.complaintDate ? new Date(data.complaintDate) : undefined,
@@ -126,7 +128,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -145,11 +147,13 @@ export async function DELETE(
       );
     }
 
-    console.log('Tentando deletar ticket:', params.id, 'da empresa:', session.user.companyId);
+    const { id } = await params;
 
-    await deleteTicket(params.id, session.user.companyId);
+    console.log('Tentando deletar ticket:', id, 'da empresa:', session.user.companyId);
 
-    console.log('Ticket deletado com sucesso:', params.id);
+    await deleteTicket(id, session.user.companyId);
+
+    console.log('Ticket deletado com sucesso:', id);
 
     return NextResponse.json({ success: true, message: 'Ticket deletado com sucesso' });
   } catch (error) {

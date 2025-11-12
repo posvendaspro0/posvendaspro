@@ -9,7 +9,7 @@ import { requireClient } from '@/lib/auth-helpers';
 export default async function EditarTicketPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await requireClient();
 
@@ -17,7 +17,8 @@ export default async function EditarTicketPage({
     return <div>Erro: Usuário não está vinculado a uma empresa</div>;
   }
 
-  const ticket = await getTicketById(params.id, session.user.companyId);
+  const { id } = await params;
+  const ticket = await getTicketById(id, session.user.companyId);
 
   if (!ticket) {
     notFound();

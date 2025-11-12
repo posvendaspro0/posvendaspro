@@ -30,7 +30,7 @@ import {
 export default async function VisualizarTicketPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await requireClient();
 
@@ -38,7 +38,8 @@ export default async function VisualizarTicketPage({
     return <div>Erro: Usuário não está vinculado a uma empresa</div>;
   }
 
-  const ticket = await getTicketById(params.id, session.user.companyId);
+  const { id } = await params;
+  const ticket = await getTicketById(id, session.user.companyId);
 
   if (!ticket) {
     notFound();
