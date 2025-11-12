@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { applyWhatsAppMask, applyCepMask } from '@/lib/input-masks';
+import { maskWhatsApp, maskCEP } from '@/lib/input-masks';
 
 const profileCompanySchema = z.object({
   name: z
@@ -189,8 +189,8 @@ export function ProfileCompanyForm({ company }: ProfileCompanyFormProps) {
               id="whatsapp"
               placeholder="(00) 00000-0000"
               disabled={isLoading}
-              value={whatsapp}
-              onChange={(e) => setValue('whatsapp', applyWhatsAppMask(e.target.value))}
+              value={whatsapp || ''}
+              onChange={(e) => setValue('whatsapp', maskWhatsApp(e.target.value), { shouldDirty: true })}
             />
           </div>
         </div>
@@ -232,8 +232,8 @@ export function ProfileCompanyForm({ company }: ProfileCompanyFormProps) {
               id="cep"
               placeholder="00000-000"
               disabled={isLoading}
-              value={cep}
-              onChange={(e) => setValue('cep', applyCepMask(e.target.value))}
+              value={cep || ''}
+              onChange={(e) => setValue('cep', maskCEP(e.target.value), { shouldDirty: true })}
             />
           </div>
 
@@ -291,11 +291,11 @@ export function ProfileCompanyForm({ company }: ProfileCompanyFormProps) {
             <Label htmlFor="state">Estado</Label>
             <Input
               id="state"
-              placeholder="UF"
+              placeholder="SP"
               maxLength={2}
               disabled={isLoading}
-              {...register('state')}
-              onChange={(e) => setValue('state', e.target.value.toUpperCase())}
+              value={watch('state') || ''}
+              onChange={(e) => setValue('state', e.target.value.toUpperCase(), { shouldDirty: true })}
             />
           </div>
         </div>
