@@ -120,9 +120,11 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                     {ticket.responsible || '-'}
                   </TableCell>
                   <TableCell className="text-slate-600">
-                    {format(new Date(ticket.complaintDate), 'dd/MM/yyyy', {
-                      locale: ptBR,
-                    })}
+                    {ticket.complaintDate 
+                      ? format(new Date(ticket.complaintDate), 'dd/MM/yyyy', {
+                          locale: ptBR,
+                        })
+                      : '-'}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
                     {ticket.productSku || '-'}

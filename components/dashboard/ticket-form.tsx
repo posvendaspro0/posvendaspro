@@ -55,6 +55,7 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
     resolver: zodResolver(ticketSchema),
     defaultValues: initialData || {
       status: 'PENDING',
+      complaintDate: new Date().toISOString().split('T')[0], // Data de hoje
       affectedReputation: false,
     },
   });
