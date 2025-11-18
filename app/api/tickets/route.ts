@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { createTicket, getTicketsByCompany } from '@/services/ticket-service';
 import { ticketSchema } from '@/lib/validations';
-import { ProblemType, TicketStatus } from '@prisma/client';
 
 /**
  * GET /api/tickets
@@ -77,12 +76,12 @@ export async function POST(request: Request) {
     const ticket = await createTicket({
       id: data.id, // ID customizado pelo usuário
       companyId: session.user.companyId,
-      status: data.status as TicketStatus,
+      status: data.status,
       responsible: data.responsible,
       complaintDate: new Date(data.complaintDate),
       mlOrderId: data.mlOrderId,
       productSku: data.productSku,
-      problemType: data.problemType as ProblemType,
+      problemType: data.problemType,
       observation: data.observation,
       resolutionDate: data.resolutionDate ? new Date(data.resolutionDate) : undefined,
       resolutionCost: data.resolutionCost ? parseFloat(data.resolutionCost) : undefined,

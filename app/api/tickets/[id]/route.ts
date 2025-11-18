@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getTicketById, updateTicket, deleteTicket } from '@/services/ticket-service';
 import { ticketSchema } from '@/lib/validations';
-import { ProblemType, TicketStatus } from '@prisma/client';
 
 /**
  * GET /api/tickets/:id
@@ -89,12 +88,12 @@ export async function PUT(
 
     const { id } = await params;
     const ticket = await updateTicket(id, session.user.companyId, {
-      status: data.status as TicketStatus | undefined,
+      status: data.status,
       responsible: data.responsible,
       complaintDate: data.complaintDate ? new Date(data.complaintDate) : undefined,
       mlOrderId: data.mlOrderId,
       productSku: data.productSku,
-      problemType: data.problemType as ProblemType | undefined,
+      problemType: data.problemType,
       observation: data.observation,
       resolutionDate: data.resolutionDate ? new Date(data.resolutionDate) : undefined,
       resolutionCost: data.resolutionCost ? parseFloat(data.resolutionCost) : undefined,
