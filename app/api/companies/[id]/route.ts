@@ -9,7 +9,7 @@ import { companySchema } from '@/lib/validations';
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -21,7 +21,8 @@ export async function GET(
       );
     }
 
-    const company = await getCompanyById(params.id);
+    const { id } = await params;
+    const company = await getCompanyById(id);
 
     if (!company) {
       return NextResponse.json(
@@ -46,7 +47,7 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -69,7 +70,8 @@ export async function PUT(
       );
     }
 
-    const company = await updateCompany(params.id, validation.data);
+    const { id } = await params;
+    const company = await updateCompany(id, validation.data);
 
     return NextResponse.json({ success: true, data: company });
   } catch (error) {
@@ -95,7 +97,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -107,7 +109,8 @@ export async function DELETE(
       );
     }
 
-    await deleteCompany(params.id);
+    const { id } = await params;
+    await deleteCompany(id);
 
     return NextResponse.json({ success: true, message: 'Empresa deletada com sucesso' });
   } catch (error) {

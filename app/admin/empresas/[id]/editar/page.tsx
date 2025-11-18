@@ -8,9 +8,10 @@ import { getCompanyById } from '@/services/company-service';
 export default async function EditarEmpresaPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const company = await getCompanyById(params.id);
+  const { id } = await params;
+  const company = await getCompanyById(id);
 
   if (!company) {
     notFound();
