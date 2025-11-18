@@ -34,7 +34,7 @@ export async function PUT(request: Request) {
     const validation = updateUserSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Dados inválidos', details: validation.error.errors },
+        { error: 'Dados inválidos', details: validation.error.issues },
         { status: 400 }
       );
     }
