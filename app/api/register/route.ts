@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { hashPassword } from '@/lib/auth-utils';
 import { registerCompanySchema } from '@/lib/validations';
 
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     // Criar empresa e usuário em uma transação
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Criar empresa
       const company = await tx.company.create({
         data: {
