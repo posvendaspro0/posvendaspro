@@ -2,7 +2,6 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth-utils';
-import { Role } from '@prisma/client';
 
 /**
  * Configuração principal do NextAuth.js v5
@@ -60,7 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Adicionar dados customizados ao token na primeira autenticação
       if (user) {
         token.id = user.id;
-        token.role = user.role as Role;
+        token.role = user.role;
         token.companyId = user.companyId;
       }
       return token;
@@ -69,7 +68,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Adicionar dados customizados à sessão
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as Role;
+        session.user.role = token.role as 'ADMIN' | 'CLIENT';
         session.user.companyId = token.companyId as string | null;
       }
       return session;
