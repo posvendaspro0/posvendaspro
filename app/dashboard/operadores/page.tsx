@@ -9,6 +9,8 @@ import { UserPlus } from 'lucide-react';
  * Página de Listagem de Operadores
  * Mostra todos os operadores da empresa
  */
+export const dynamic = 'force-dynamic';
+
 export default async function OperadoresPage() {
   const session = await requireClient();
 

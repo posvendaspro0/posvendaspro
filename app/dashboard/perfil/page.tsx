@@ -13,6 +13,8 @@ import { ptBR } from 'date-fns/locale';
  * Página de Perfil do Cliente
  * Permite visualizar e editar informações pessoais, da empresa e alterar senha
  */
+export const dynamic = 'force-dynamic';
+
 export default async function PerfilPage() {
   const session = await requireClient();
 

@@ -14,6 +14,8 @@ import { ArrowLeft, Edit, User, Mail, Calendar, CheckCircle2, XCircle } from 'lu
  * Página de Visualização de Operador
  * Mostra todos os detalhes do operador
  */
+export const dynamic = 'force-dynamic';
+
 export default async function VisualizarOperadorPage({
   params,
 }: {

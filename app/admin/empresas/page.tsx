@@ -8,6 +8,8 @@ import { CompanyTable } from '@/components/admin/company-table';
  * Página de Listagem de Empresas
  * Lista todas as empresas cadastradas no sistema
  */
+export const dynamic = 'force-dynamic';
+
 export default async function EmpresasPage() {
   const companies = await getAllCompanies();
 

@@ -27,6 +27,8 @@ import {
  * Página de Visualização de Ticket
  * Mostra todos os detalhes do ticket
  */
+export const dynamic = 'force-dynamic';
+
 export default async function VisualizarTicketPage({
   params,
 }: {

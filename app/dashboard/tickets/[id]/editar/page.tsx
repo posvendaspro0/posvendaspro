@@ -6,6 +6,8 @@ import { requireClient } from '@/lib/auth-helpers';
 /**
  * Página de Edição de Ticket
  */
+export const dynamic = 'force-dynamic';
+
 export default async function EditarTicketPage({
   params,
 }: {

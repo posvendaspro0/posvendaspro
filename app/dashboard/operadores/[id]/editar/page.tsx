@@ -6,6 +6,8 @@ import { OperatorForm } from '@/components/dashboard/operator-form';
 /**
  * Página de Edição de Operador
  */
+export const dynamic = 'force-dynamic';
+
 export default async function EditarOperadorPage({
   params,
 }: {

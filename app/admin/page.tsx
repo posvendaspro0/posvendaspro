@@ -7,6 +7,8 @@ import { requireAdmin } from '@/lib/auth-helpers';
  * Dashboard Principal ADMIN
  * Visão geral com estatísticas do sistema
  */
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboard() {
   // Garantir que apenas ADMINs acessem
   await requireAdmin();

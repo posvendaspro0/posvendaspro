@@ -5,6 +5,8 @@ import { getCompanyById } from '@/services/company-service';
 /**
  * Página de Edição de Empresa
  */
+export const dynamic = 'force-dynamic';
+
 export default async function EditarEmpresaPage({
   params,
 }: {

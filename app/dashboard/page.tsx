@@ -7,6 +7,8 @@ import { requireClient } from '@/lib/auth-helpers';
  * Dashboard Principal CLIENT
  * Visão geral com estatísticas de reclamações
  */
+export const dynamic = 'force-dynamic';
+
 export default async function ClientDashboard() {
   // Garantir que apenas CLIENTs acessem
   const session = await requireClient();

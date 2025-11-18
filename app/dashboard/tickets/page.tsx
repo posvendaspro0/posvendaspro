@@ -9,6 +9,8 @@ import { TicketsTable } from '@/components/dashboard/tickets-table';
  * Página de Listagem de Tickets
  * Exibe todos os tickets da empresa
  */
+export const dynamic = 'force-dynamic';
+
 export default async function TicketsPage() {
   const session = await requireClient();
   
