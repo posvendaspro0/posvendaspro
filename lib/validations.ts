@@ -60,7 +60,7 @@ export const userSchema = z.object({
     .regex(/[0-9]/, 'Senha deve conter ao menos um número')
     .regex(/[^A-Za-z0-9]/, 'Senha deve conter ao menos um caractere especial'),
   role: z.enum(['ADMIN', 'CLIENT'], {
-    errorMap: () => ({ message: 'Perfil inválido' }),
+    message: 'Perfil inválido',
   }),
   companyId: z.string().optional(),
 });
@@ -90,7 +90,7 @@ export const ticketSchema = z.object({
     .max(50, 'ID deve ter no máximo 50 caracteres')
     .regex(/^[A-Za-z0-9-_]+$/, 'ID deve conter apenas letras, números, hífens e underscores'),
   status: z.enum(['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], {
-    errorMap: () => ({ message: 'Status inválido' }),
+    message: 'Status inválido',
   }),
   responsible: z.string().optional(),
   complaintDate: z.string().min(1, 'Data da reclamação é obrigatória'),
@@ -105,7 +105,7 @@ export const ticketSchema = z.object({
     'RETURN_REQUEST',
     'OTHER',
   ], {
-    errorMap: () => ({ message: 'Tipo de problema inválido' }),
+    message: 'Tipo de problema inválido',
   }),
   observation: z
     .string()
