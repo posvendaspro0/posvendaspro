@@ -31,7 +31,7 @@ export function CompanyForm({ initialData, mode }: CompanyFormProps) {
     handleSubmit,
     formState: { errors },
   } = useForm<CompanyInput>({
-    resolver: zodResolver(companySchema),
+    resolver: zodResolver(companySchema) as any,
     defaultValues: initialData,
   });
 

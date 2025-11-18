@@ -31,7 +31,7 @@ export function LoginForm() {
     setValue,
     formState: { errors },
   } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema) as any,
   });
 
   // Preencher email se vier do cadastro

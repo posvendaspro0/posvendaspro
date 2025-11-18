@@ -82,7 +82,7 @@ export function ProfileCompanyForm({ company }: ProfileCompanyFormProps) {
     setValue,
     watch,
   } = useForm<ProfileCompanyInput>({
-    resolver: zodResolver(profileCompanySchema),
+    resolver: zodResolver(profileCompanySchema) as any,
     defaultValues: {
       name: company.name,
       cnpj: company.cnpj || '',

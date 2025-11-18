@@ -52,7 +52,7 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
     control,
     formState: { errors },
   } = useForm<TicketInput>({
-    resolver: zodResolver(ticketSchema),
+    resolver: zodResolver(ticketSchema) as any,
     defaultValues: initialData || {
       status: 'PENDING',
       complaintDate: new Date().toISOString().split('T')[0], // Data de hoje

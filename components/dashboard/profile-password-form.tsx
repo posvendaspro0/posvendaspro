@@ -47,7 +47,7 @@ export function ProfilePasswordForm({ userId }: ProfilePasswordFormProps) {
     formState: { errors },
     reset,
   } = useForm<ProfilePasswordInput>({
-    resolver: zodResolver(profilePasswordSchema),
+    resolver: zodResolver(profilePasswordSchema) as any,
     defaultValues: {
       currentPassword: '',
       newPassword: '',

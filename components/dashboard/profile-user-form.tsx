@@ -45,7 +45,7 @@ export function ProfileUserForm({ user }: ProfileUserFormProps) {
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm<ProfileUserInput>({
-    resolver: zodResolver(profileUserSchema),
+    resolver: zodResolver(profileUserSchema) as any,
     defaultValues: {
       name: user.name,
       email: user.email,

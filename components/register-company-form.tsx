@@ -33,7 +33,7 @@ export function RegisterCompanyForm() {
     setValue,
     formState: { errors },
   } = useForm<RegisterCompanyInput>({
-    resolver: zodResolver(registerCompanySchema),
+    resolver: zodResolver(registerCompanySchema) as any,
     mode: 'onChange', // Validação em tempo real
   });
 

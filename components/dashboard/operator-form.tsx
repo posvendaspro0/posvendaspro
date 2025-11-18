@@ -33,7 +33,7 @@ export function OperatorForm({ mode, initialData }: OperatorFormProps) {
     setValue,
     formState: { errors },
   } = useForm<OperatorInput | UpdateOperatorInput>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: initialData || {
       name: '',
       email: '',
