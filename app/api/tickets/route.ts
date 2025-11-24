@@ -72,9 +72,8 @@ export async function POST(request: Request) {
 
     const data = validation.data;
 
-    // Preparar dados para criação
+    // Preparar dados para criação (ID será gerado automaticamente)
     const ticket = await createTicket({
-      id: data.id, // ID customizado pelo usuário
       companyId: session.user.companyId,
       status: data.status,
       responsible: data.responsible,
@@ -83,10 +82,8 @@ export async function POST(request: Request) {
       productSku: data.productSku,
       problemType: data.problemType,
       observation: data.observation,
-      resolutionDate: data.resolutionDate ? new Date(data.resolutionDate) : undefined,
       resolutionCost: data.resolutionCost ? parseFloat(data.resolutionCost) : undefined,
       affectedReputation: data.affectedReputation,
-      resolutionTime: data.resolutionTime ? parseInt(data.resolutionTime, 10) : undefined,
       clientName: data.clientName,
       clientEmail: data.clientEmail,
     });

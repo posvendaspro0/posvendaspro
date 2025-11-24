@@ -113,29 +113,31 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
             </Alert>
           )}
 
-          {/* ID do Ticket */}
-          <div className="space-y-2">
-            <Label htmlFor="id">ID do Ticket *</Label>
-            <Input
-              id="id"
-              placeholder="Ex: TICKET-001, MLB-12345, etc"
-              disabled={isLoading || mode === 'edit'}
-              {...register('id')}
-              className={errors.id ? 'border-red-500' : ''}
-            />
-            {errors.id && (
-              <p className="text-sm text-red-500">{errors.id.message}</p>
-            )}
-            {mode === 'edit' ? (
-              <p className="text-xs text-slate-500">
-                O ID não pode ser alterado após criação
+          {/* ID do Ticket (apenas exibição no modo editar) */}
+          {mode === 'edit' && initialData?.id && (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-slate-600">ID do Ticket</Label>
+                  <p className="text-2xl font-bold font-mono text-slate-900 mt-1">
+                    {initialData.id}
+                  </p>
+                </div>
+                <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                  Gerado automaticamente
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Informativo de ID Automático (apenas no modo criar) */}
+          {mode === 'create' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                🎫 <strong>ID Automático:</strong> O ID do ticket será gerado automaticamente de forma sequencial (ex: TICKET-0001, TICKET-0002...).
               </p>
-            ) : (
-              <p className="text-xs text-slate-500">
-                Digite um identificador único para este ticket
-              </p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Data da Reclamação */}
           <div className="space-y-2">

@@ -31,7 +31,6 @@ function serializeTickets(tickets: Ticket[]): SerializedTicket[] {
 }
 
 export interface CreateTicketData {
-  id: string; // ID customizado pelo usuário
   companyId: string;
   status: TicketStatus;
   responsible?: string;
@@ -62,6 +61,48 @@ export interface UpdateTicketData {
   resolutionTime?: number;
   clientName?: string;
   clientEmail?: string;
+}
+
+/**
+ * Gera o próximo ID sequencial para um ticket
+ * Formato: TICKET-0001, TICKET-0002, etc.
+ */
+async function generateNextTicketId(companyId: string): Promise<string> {
+  try {
+    // Buscar o último ticket da empresa ordenado por ID decrescente
+    const lastTicket = await prisma.ticket.findFirst({
+      where: { 
+        companyId,
+        id: {
+          startsWith: 'TICKET-'
+        }
+      },
+      orderBy: {
+        id: 'desc'
+      }
+    });
+
+    if (!lastTicket) {
+      // Primeiro ticket da empresa
+      return 'TICKET-0001';
+    }
+
+    // Extrair o número do último ID (ex: TICKET-0042 -> 42)
+    const lastNumber = parseInt(lastTicket.id.replace('TICKET-', ''), 10);
+    
+    if (isNaN(lastNumber)) {
+      // Se não conseguir extrair número, começar do 1
+      return 'TICKET-0001';
+    }
+
+    // Incrementar e formatar com zeros à esquerda (4 dígitos)
+    const nextNumber = lastNumber + 1;
+    return `TICKET-${String(nextNumber).padStart(4, '0')}`;
+  } catch (error) {
+    console.error('Erro ao gerar ID do ticket:', error);
+    // Em caso de erro, gerar um ID único com timestamp
+    return `TICKET-${Date.now()}`;
+  }
 }
 
 /**
@@ -103,25 +144,16 @@ export async function getTicketById(id: string, companyId: string): Promise<Seri
 }
 
 /**
- * Criar novo ticket
+ * Criar novo ticket com ID gerado automaticamente
  */
 export async function createTicket(data: CreateTicketData): Promise<SerializedTicket> {
   try {
-    // Verificar se já existe ticket com mesmo ID na empresa
-    const existingTicket = await prisma.ticket.findFirst({
-      where: {
-        id: data.id,
-        companyId: data.companyId,
-      },
-    });
-
-    if (existingTicket) {
-      throw new Error('Já existe um ticket com este ID');
-    }
+    // Gerar ID sequencial automaticamente
+    const ticketId = await generateNextTicketId(data.companyId);
 
     const ticket = await prisma.ticket.create({
       data: {
-        id: data.id, // ID customizado
+        id: ticketId, // ID gerado automaticamente
         companyId: data.companyId,
         status: data.status,
         responsible: data.responsible || null,

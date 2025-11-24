@@ -82,13 +82,8 @@ export const updateUserSchema = userSchema.extend({
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 
-// Schema para criação de ticket
+// Schema para criação de ticket (sem ID, será gerado automaticamente)
 export const ticketSchema = z.object({
-  id: z
-    .string()
-    .min(1, 'ID é obrigatório')
-    .max(50, 'ID deve ter no máximo 50 caracteres')
-    .regex(/^[A-Za-z0-9-_]+$/, 'ID deve conter apenas letras, números, hífens e underscores'),
   status: z.enum(['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], {
     message: 'Status inválido',
   }),
