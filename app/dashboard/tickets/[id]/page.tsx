@@ -21,7 +21,10 @@ import {
   Clock,
   TrendingDown,
   CheckCircle2,
-  XCircle
+  XCircle,
+  FileText,
+  MessageSquare,
+  Activity
 } from 'lucide-react';
 
 /**
@@ -199,6 +202,140 @@ export default async function VisualizarTicketPage({
           <p className="text-slate-700 whitespace-pre-wrap">{ticket.observation}</p>
         </CardContent>
       </Card>
+
+      {/* Seção: Reclamação (Claim do Mercado Livre) */}
+      {ticket.mlOrderId && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <CardTitle className="text-lg">Reclamação (Mercado Livre)</CardTitle>
+              </div>
+              <Badge className="bg-blue-100 text-blue-800">
+                Integração API ML
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Informações da Claim */}
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Detalhes da Reclamação
+              </h4>
+              <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm font-medium text-slate-600">ID da Claim</span>
+                    <p className="text-slate-900 font-mono text-sm">
+                      {ticket.mlComplaintId || 'Aguardando sincronização...'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-slate-600">Status da Claim</span>
+                    <p className="text-slate-900">
+                      {ticket.mlStatus || 'Não disponível'}
+                    </p>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <span className="text-sm font-medium text-slate-600">Motivo da Reclamação</span>
+                  <p className="text-slate-700 mt-1">
+                    {problemTypeLabels[ticket.problemType]}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Histórico de Eventos */}
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Histórico de Eventos
+              </h4>
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="space-y-3">
+                  {/* Timeline de eventos (mockado - será preenchido pela API) */}
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-2 h-2 rounded-full bg-blue-500" />
+                      <div className="w-0.5 h-full bg-slate-300 mt-1" />
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <p className="text-sm font-medium text-slate-900">Reclamação aberta</p>
+                      <p className="text-xs text-slate-500">
+                        {ticket.complaintDate 
+                          ? format(new Date(ticket.complaintDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                          : '-'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {ticket.resolutionDate && (
+                    <div className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-slate-900">Reclamação resolvida</p>
+                        <p className="text-xs text-slate-500">
+                          {format(new Date(ticket.resolutionDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    ℹ️ <strong>Integração em desenvolvimento:</strong> O histórico completo de eventos será carregado automaticamente da API do Mercado Livre quando a integração estiver ativa.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Ações Tomadas na Claim */}
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                Ações Tomadas
+              </h4>
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="grid gap-3">
+                  {/* Status das ações */}
+                  <div className="flex items-center justify-between p-3 bg-white rounded border border-slate-200">
+                    <div>
+                      <p className="font-medium text-slate-900">Status da Ação</p>
+                      <p className="text-sm text-slate-500">Última atualização da claim</p>
+                    </div>
+                    <Badge className={statusConfig[ticket.status].color}>
+                      {statusConfig[ticket.status].label}
+                    </Badge>
+                  </div>
+
+                  {/* Possíveis ações da API ML */}
+                  <div className="p-3 bg-white rounded border border-slate-200">
+                    <p className="text-sm text-slate-600 mb-2">
+                      <strong>Ações disponíveis via API ML:</strong>
+                    </p>
+                    <ul className="text-sm text-slate-600 space-y-1 ml-4">
+                      <li>• Aceitar reclamação</li>
+                      <li>• Recusar reclamação</li>
+                      <li>• Entrar em disputa</li>
+                      <li>• Enviar mensagem ao comprador</li>
+                      <li>• Solicitar mediação do ML</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Informações de Resolução */}
       <Card>
