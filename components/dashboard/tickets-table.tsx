@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { formatResolutionTime } from '@/lib/time-utils';
+import { formatResolutionTime, calculateResolutionTime } from '@/lib/time-utils';
 import {
   Table,
   TableBody,
@@ -15,7 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit, CheckCircle2, XCircle } from 'lucide-react';
+import { Eye, Edit, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { TicketStatus, ProblemType } from '@prisma/client';
 
 interface Ticket {
@@ -67,8 +68,51 @@ const problemTypeLabels = {
 };
 
 /**
+ * Componente de Tempo Aberto (atualiza em tempo real)
+ */
+function OpenTime({ ticket }: { ticket: Ticket }) {
+  const [openTime, setOpenTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      // Se o ticket está resolvido/fechado, mostrar o tempo de resolução
+      if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') {
+        if (ticket.resolutionTime) {
+          setOpenTime(formatResolutionTime(ticket.resolutionTime));
+        } else {
+          setOpenTime('Resolvido');
+        }
+        return;
+      }
+
+      // Se está aberto, calcular o tempo desde a data de reclamação
+      const now = new Date();
+      const complaintDate = new Date(ticket.complaintDate);
+      const hoursOpen = calculateResolutionTime(complaintDate, now);
+      setOpenTime(formatResolutionTime(hoursOpen));
+    };
+
+    updateTime(); // Atualizar imediatamente
+    const interval = setInterval(updateTime, 60000); // Atualizar a cada 1 minuto
+
+    return () => clearInterval(interval);
+  }, [ticket]);
+
+  const isOpen = ticket.status === 'PENDING' || ticket.status === 'IN_PROGRESS';
+
+  return (
+    <div className="flex items-center gap-2">
+      {isOpen && <Clock className="h-3 w-3 text-orange-500 animate-pulse" />}
+      <span className={`font-medium ${isOpen ? 'text-orange-600' : 'text-green-600'}`}>
+        {openTime}
+      </span>
+    </div>
+  );
+}
+
+/**
  * Tabela de Tickets
- * Exibe listagem completa de tickets com todos os campos
+ * Exibe listagem de tickets com campos reorganizados
  */
 export function TicketsTable({ tickets }: TicketsTableProps) {
   if (tickets.length === 0) {
@@ -90,16 +134,13 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[140px]">ID</TableHead>
+              <TableHead className="w-[140px]">Ticket</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Responsável</TableHead>
-              <TableHead>Data Reclamação</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Data Resolução</TableHead>
-              <TableHead>Custo</TableHead>
-              <TableHead className="text-center">Reputação</TableHead>
-              <TableHead>Tempo Resolução</TableHead>
+              <TableHead>Data de Reclamação</TableHead>
+              <TableHead>Tipo de Problema</TableHead>
+              <TableHead className="text-center">Reputação Afetada</TableHead>
+              <TableHead>Tempo Aberto</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -109,61 +150,67 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
               
               return (
                 <TableRow key={ticket.id}>
+                  {/* 1. Ticket (ID) */}
                   <TableCell className="font-mono text-xs font-medium">
                     {ticket.id}
                   </TableCell>
+
+                  {/* 2. Status */}
                   <TableCell>
                     <Badge className={status.color}>
                       {status.label}
                     </Badge>
                   </TableCell>
+
+                  {/* 3. Responsável */}
                   <TableCell className="font-medium">
                     {ticket.responsible || '-'}
                   </TableCell>
+
+                  {/* 4. Data de Reclamação */}
                   <TableCell className="text-slate-600">
                     {ticket.complaintDate 
-                      ? format(new Date(ticket.complaintDate), 'dd/MM/yyyy', {
+                      ? format(new Date(ticket.complaintDate), "dd/MM/yyyy 'às' HH:mm", {
                           locale: ptBR,
                         })
                       : '-'}
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {ticket.productSku || '-'}
-                  </TableCell>
+
+                  {/* 5. Tipo de Problema */}
                   <TableCell className="text-sm">
                     {problemTypeLabels[ticket.problemType]}
                   </TableCell>
-                  <TableCell className="text-slate-600">
-                    {ticket.resolutionDate
-                      ? format(new Date(ticket.resolutionDate), 'dd/MM/yyyy', {
-                          locale: ptBR,
-                        })
-                      : '-'}
-                  </TableCell>
-                  <TableCell className="text-slate-600">
-                    {ticket.resolutionCost
-                      ? `R$ ${Number(ticket.resolutionCost).toFixed(2)}`
-                      : '-'}
-                  </TableCell>
+
+                  {/* 6. Reputação Afetada */}
                   <TableCell className="text-center">
                     {ticket.affectedReputation ? (
-                      <XCircle className="h-4 w-4 text-red-500 inline" />
+                      <div className="flex items-center justify-center gap-1">
+                        <XCircle className="h-4 w-4 text-red-500" />
+                        <span className="text-xs text-red-600 font-medium">Sim</span>
+                      </div>
                     ) : (
-                      <CheckCircle2 className="h-4 w-4 text-green-500 inline" />
+                      <div className="flex items-center justify-center gap-1">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <span className="text-xs text-green-600 font-medium">Não</span>
+                      </div>
                     )}
                   </TableCell>
-                  <TableCell className="text-slate-600 font-medium">
-                    {ticket.resolutionTime ? formatResolutionTime(ticket.resolutionTime) : '-'}
+
+                  {/* 7. Tempo Aberto (em tempo real) */}
+                  <TableCell>
+                    <OpenTime ticket={ticket} />
                   </TableCell>
+
+                  {/* 8. Ações */}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Link href={`/dashboard/tickets/${ticket.id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" title="Visualizar">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
                       <Link href={`/dashboard/tickets/${ticket.id}/editar`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" title="Editar">
                           <Edit className="h-4 w-4" />
                         </Button>
                       </Link>
