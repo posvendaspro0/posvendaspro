@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { DeleteTicketButton } from '@/components/dashboard/delete-ticket-button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatResolutionTimeDetailed, getResolutionTimeColor } from '@/lib/time-utils';
 import { 
   ArrowLeft, 
   Edit, 
@@ -237,12 +238,20 @@ export default async function VisualizarTicketPage({
                 <Clock className="h-4 w-4" />
                 <span className="font-medium">Tempo de Resolução</span>
               </div>
-              <p className="text-slate-900 font-semibold">
-                {ticket.resolutionTime ? `${ticket.resolutionTime}h` : 'Não informado'}
-              </p>
-              {ticket.resolutionTime && (
-                <p className="text-xs text-slate-500">
-                  {Math.floor(ticket.resolutionTime / 24)}d {ticket.resolutionTime % 24}h
+              {ticket.resolutionTime ? (
+                <>
+                  <p className="text-slate-900 font-semibold">
+                    {formatResolutionTimeDetailed(ticket.resolutionTime)}
+                  </p>
+                  <Badge className={`${getResolutionTimeColor(ticket.resolutionTime).color} text-xs mt-1`}>
+                    {getResolutionTimeColor(ticket.resolutionTime).label}
+                  </Badge>
+                </>
+              ) : (
+                <p className="text-slate-500">
+                  {ticket.status === 'RESOLVED' || ticket.status === 'CLOSED' 
+                    ? 'Calculado automaticamente' 
+                    : 'Aguardando resolução'}
                 </p>
               )}
             </div>

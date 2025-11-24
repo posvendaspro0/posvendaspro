@@ -121,14 +121,6 @@ export const ticketSchema = z.object({
       return !isNaN(num) && num >= 0;
     }, { message: 'Custo deve ser um número válido' }),
   affectedReputation: z.boolean().default(false),
-  resolutionTime: z
-    .string()
-    .optional()
-    .refine((val) => {
-      if (!val) return true;
-      const num = parseInt(val, 10);
-      return !isNaN(num) && num >= 0;
-    }, { message: 'Tempo deve ser um número válido' }),
   clientName: z.string().optional(),
   clientEmail: z.string().email('E-mail inválido').optional().or(z.literal('')),
 });

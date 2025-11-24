@@ -301,22 +301,7 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="resolutionTime">Tempo de Resolução (horas)</Label>
-                <Input
-                  id="resolutionTime"
-                  type="number"
-                  placeholder="24"
-                  disabled={isLoading}
-                  {...register('resolutionTime')}
-                  className={errors.resolutionTime ? 'border-red-500' : ''}
-                />
-                {errors.resolutionTime && (
-                  <p className="text-sm text-red-500">{errors.resolutionTime.message}</p>
-                )}
-              </div>
-
+            <div className="mt-4">
               <div className="space-y-2">
                 <Label htmlFor="affectedReputation" className="block mb-3">
                   Afetou a Reputação?
@@ -341,6 +326,9 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
                     </div>
                   )}
                 />
+                <p className="text-xs text-slate-500 mt-2">
+                  ⏱️ O tempo de resolução será calculado automaticamente quando o status for alterado para "Resolvido" ou "Fechado"
+                </p>
               </div>
             </div>
           </div>

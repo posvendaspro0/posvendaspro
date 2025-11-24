@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatResolutionTime } from '@/lib/time-utils';
 import {
   Table,
   TableBody,
@@ -98,7 +99,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
               <TableHead>Data Resolução</TableHead>
               <TableHead>Custo</TableHead>
               <TableHead className="text-center">Reputação</TableHead>
-              <TableHead>Tempo (h)</TableHead>
+              <TableHead>Tempo Resolução</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -151,8 +152,8 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                       <CheckCircle2 className="h-4 w-4 text-green-500 inline" />
                     )}
                   </TableCell>
-                  <TableCell className="text-slate-600">
-                    {ticket.resolutionTime || '-'}
+                  <TableCell className="text-slate-600 font-medium">
+                    {ticket.resolutionTime ? formatResolutionTime(ticket.resolutionTime) : '-'}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
