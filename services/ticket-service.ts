@@ -6,6 +6,30 @@ import { Ticket, TicketStatus, ProblemType, Prisma } from '@prisma/client';
  * Lógica de negócio para gestão de tickets
  */
 
+/**
+ * Tipo serializado de Ticket (converte Decimal para number)
+ */
+export type SerializedTicket = Omit<Ticket, 'resolutionCost'> & {
+  resolutionCost: number | null;
+};
+
+/**
+ * Serializa um ticket convertendo Decimal para number
+ */
+function serializeTicket(ticket: Ticket): SerializedTicket {
+  return {
+    ...ticket,
+    resolutionCost: ticket.resolutionCost ? Number(ticket.resolutionCost) : null,
+  };
+}
+
+/**
+ * Serializa uma lista de tickets
+ */
+function serializeTickets(tickets: Ticket[]): SerializedTicket[] {
+  return tickets.map(serializeTicket);
+}
+
 export interface CreateTicketData {
   id: string; // ID customizado pelo usuário
   companyId: string;
@@ -43,7 +67,7 @@ export interface UpdateTicketData {
 /**
  * Buscar todos os tickets de uma empresa
  */
-export async function getTicketsByCompany(companyId: string) {
+export async function getTicketsByCompany(companyId: string): Promise<SerializedTicket[]> {
   try {
     const tickets = await prisma.ticket.findMany({
       where: { companyId },
@@ -52,7 +76,7 @@ export async function getTicketsByCompany(companyId: string) {
       },
     });
 
-    return tickets;
+    return serializeTickets(tickets);
   } catch (error) {
     console.error('Erro ao buscar tickets:', error);
     throw new Error('Erro ao buscar tickets');
@@ -62,7 +86,7 @@ export async function getTicketsByCompany(companyId: string) {
 /**
  * Buscar ticket por ID
  */
-export async function getTicketById(id: string, companyId: string) {
+export async function getTicketById(id: string, companyId: string): Promise<SerializedTicket | null> {
   try {
     const ticket = await prisma.ticket.findFirst({
       where: {
@@ -71,7 +95,7 @@ export async function getTicketById(id: string, companyId: string) {
       },
     });
 
-    return ticket;
+    return ticket ? serializeTicket(ticket) : null;
   } catch (error) {
     console.error('Erro ao buscar ticket:', error);
     throw new Error('Erro ao buscar ticket');
@@ -81,7 +105,7 @@ export async function getTicketById(id: string, companyId: string) {
 /**
  * Criar novo ticket
  */
-export async function createTicket(data: CreateTicketData): Promise<Ticket> {
+export async function createTicket(data: CreateTicketData): Promise<SerializedTicket> {
   try {
     // Verificar se já existe ticket com mesmo ID na empresa
     const existingTicket = await prisma.ticket.findFirst({
@@ -115,7 +139,7 @@ export async function createTicket(data: CreateTicketData): Promise<Ticket> {
       },
     });
 
-    return ticket;
+    return serializeTicket(ticket);
   } catch (error) {
     if (error instanceof Error) {
       throw error;
@@ -132,7 +156,7 @@ export async function updateTicket(
   id: string,
   companyId: string,
   data: UpdateTicketData
-): Promise<Ticket> {
+): Promise<SerializedTicket> {
   try {
     // Verificar se ticket existe e pertence à empresa
     const existingTicket = await prisma.ticket.findFirst({
@@ -179,7 +203,7 @@ export async function updateTicket(
       },
     });
 
-    return ticket;
+    return serializeTicket(ticket);
   } catch (error) {
     if (error instanceof Error) {
       throw error;
