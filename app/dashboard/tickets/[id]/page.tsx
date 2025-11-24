@@ -24,7 +24,10 @@ import {
   XCircle,
   FileText,
   MessageSquare,
-  Activity
+  Activity,
+  Truck,
+  MapPin,
+  PackageCheck
 } from 'lucide-react';
 
 /**
@@ -329,6 +332,169 @@ export default async function VisualizarTicketPage({
                       <li>• Enviar mensagem ao comprador</li>
                       <li>• Solicitar mediação do ML</li>
                     </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Seção: Logística de Entrega (Shipping do Mercado Livre) */}
+      {ticket.mlOrderId && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-green-600" />
+                <CardTitle className="text-lg">Logística de Entrega</CardTitle>
+              </div>
+              <Badge className="bg-green-100 text-green-800">
+                Integração API ML
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Informações do Envio */}
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Informações do Envio
+              </h4>
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Tipo de Envio */}
+                  <div className="p-4 bg-white rounded-lg border border-slate-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <PackageCheck className="h-4 w-4 text-slate-600" />
+                      <span className="text-sm font-medium text-slate-600">Tipo de Envio</span>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-lg font-semibold text-slate-900">
+                        Aguardando sincronização...
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Ex: Normal, Full, Flex, Coleta
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status do Envio */}
+                  <div className="p-4 bg-white rounded-lg border border-slate-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="h-4 w-4 text-slate-600" />
+                      <span className="text-sm font-medium text-slate-600">Status do Envio</span>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-lg font-semibold text-slate-900">
+                        Aguardando sincronização...
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Ex: Pronto para enviar, Em trânsito, Entregue
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline de Rastreamento */}
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Rastreamento da Entrega
+              </h4>
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="space-y-3">
+                  {/* Timeline visual (mockado - será preenchido pela API) */}
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-blue-500" />
+                      <div className="w-0.5 h-full bg-slate-300 mt-1" />
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <p className="text-sm font-medium text-slate-900">Pedido aprovado</p>
+                      <p className="text-xs text-slate-500">Aguardando preparação</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-orange-500" />
+                      <div className="w-0.5 h-full bg-slate-300 mt-1" />
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <p className="text-sm font-medium text-slate-900">Pronto para envio</p>
+                      <p className="text-xs text-slate-500">Aguardando postagem</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-purple-500" />
+                      <div className="w-0.5 h-full bg-slate-300 mt-1" />
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <p className="text-sm font-medium text-slate-900">Em trânsito</p>
+                      <p className="text-xs text-slate-500">Produto a caminho</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-green-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-900">Entregue</p>
+                      <p className="text-xs text-slate-500">Produto recebido pelo comprador</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    ℹ️ <strong>Integração em desenvolvimento:</strong> O rastreamento completo da entrega será carregado automaticamente da API do Mercado Livre quando a integração estiver ativa.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Possíveis Status de Envio */}
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Status Possíveis do Envio</h4>
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-slate-700">Pronto para enviar</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-orange-500" />
+                    <span className="text-slate-700">Em preparação</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-purple-500" />
+                    <span className="text-slate-700">Em trânsito</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <span className="text-slate-700">Entregue</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                    <span className="text-slate-700">Não entregue</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                    <span className="text-slate-700">Em devolução</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-pink-500" />
+                    <span className="text-slate-700">Cancelado</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-slate-500" />
+                    <span className="text-slate-700">Aguardando retirada</span>
                   </div>
                 </div>
               </div>
