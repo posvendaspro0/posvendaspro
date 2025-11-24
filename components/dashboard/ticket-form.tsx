@@ -46,6 +46,17 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Função para obter data/hora local no formato correto para datetime-local
+  const getLocalDateTimeString = (date?: Date | string) => {
+    const d = date ? new Date(date) : new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const {
     register,
     handleSubmit,
@@ -53,9 +64,14 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
     formState: { errors },
   } = useForm<TicketInput>({
     resolver: zodResolver(ticketSchema) as any,
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      ...initialData,
+      complaintDate: initialData.complaintDate 
+        ? getLocalDateTimeString(initialData.complaintDate)
+        : getLocalDateTimeString(),
+    } : {
       status: 'PENDING',
-      complaintDate: new Date().toISOString().split('T')[0], // Data de hoje
+      complaintDate: getLocalDateTimeString(), // Data e hora atuais
       affectedReputation: false,
     },
   });
@@ -141,10 +157,10 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
 
           {/* Data da Reclamação */}
           <div className="space-y-2">
-            <Label htmlFor="complaintDate">Data da Reclamação *</Label>
+            <Label htmlFor="complaintDate">Data e Hora da Reclamação *</Label>
             <Input
               id="complaintDate"
-              type="date"
+              type="datetime-local"
               disabled={isLoading}
               {...register('complaintDate')}
               className={errors.complaintDate ? 'border-red-500' : ''}
@@ -153,7 +169,7 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
               <p className="text-sm text-red-500">{errors.complaintDate.message}</p>
             )}
             <p className="text-xs text-slate-500">
-              Data em que a reclamação foi registrada
+              Data e hora em que a reclamação foi registrada (preenchido automaticamente)
             </p>
           </div>
 
