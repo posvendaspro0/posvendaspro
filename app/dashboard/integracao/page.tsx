@@ -1,13 +1,28 @@
+import { Suspense } from 'react';
 import { requireClient } from '@/lib/auth-helpers';
-import { Card, CardContent } from '@/components/ui/card';
-import { Link as LinkIcon, Zap, RefreshCw, Shield } from 'lucide-react';
+import { prisma } from '@/lib/prisma';
+import { MercadoLivreConnection } from '@/components/dashboard/ml-connection';
 
 /**
  * Página de Integração com Mercado Livre
- * Em desenvolvimento - Em breve
+ * Gerencia conexão OAuth2 e sincronização de dados
  */
+export const dynamic = 'force-dynamic';
+
 export default async function IntegracaoPage() {
-  await requireClient();
+  const session = await requireClient();
+
+  if (!session.user.companyId) {
+    return <div>Erro: Usuário não está vinculado a uma empresa</div>;
+  }
+
+  // Busca conta ML ativa da empresa
+  const mlAccount = await prisma.mlAccount.findFirst({
+    where: {
+      companyId: session.user.companyId,
+      isActive: true,
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -18,79 +33,12 @@ export default async function IntegracaoPage() {
         </p>
       </div>
 
-      {/* Card de "Em Breve" */}
-      <Card className="border border-slate-200">
-        <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="rounded-full bg-slate-100 p-6 mb-6">
-            <LinkIcon className="h-12 w-12 text-slate-600" />
-          </div>
-          
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
-            Em Breve: Integração Completa com Mercado Livre
-          </h2>
-          
-          <p className="text-slate-600 text-center max-w-md mb-8">
-            Conecte sua conta do Mercado Livre e importe automaticamente suas reclamações, pedidos e dados dos clientes.
-          </p>
-
-          {/* Preview de Recursos */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 w-full max-w-4xl">
-            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
-                <Zap className="h-6 w-6 text-slate-600" />
-              </div>
-              <h3 className="font-semibold text-slate-900 mb-1">
-                Importação Automática
-              </h3>
-              <p className="text-sm text-slate-600">
-                Tickets criados automaticamente das reclamações do ML
-              </p>
-            </div>
-
-            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
-                <RefreshCw className="h-6 w-6 text-slate-600" />
-              </div>
-              <h3 className="font-semibold text-slate-900 mb-1">
-                Sincronização Bidirecional
-              </h3>
-              <p className="text-sm text-slate-600">
-                Atualizações automáticas entre o sistema e o ML
-              </p>
-            </div>
-
-            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
-                <Shield className="h-6 w-6 text-slate-600" />
-              </div>
-              <h3 className="font-semibold text-slate-900 mb-1">
-                Conexão Segura
-              </h3>
-              <p className="text-sm text-slate-600">
-                OAuth2 com tokens criptografados
-              </p>
-            </div>
-
-            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-200">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
-                <LinkIcon className="h-6 w-6 text-slate-600" />
-              </div>
-              <h3 className="font-semibold text-slate-900 mb-1">
-                Múltiplas Contas
-              </h3>
-              <p className="text-sm text-slate-600">
-                Conecte várias contas do Mercado Livre
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8 text-center">
-            <p className="text-sm text-slate-500">
-              <span className="font-medium">Em desenvolvimento:</span> A integração será liberada em breve!
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <Suspense fallback={<div>Carregando...</div>}>
+        <MercadoLivreConnection 
+          isConnected={!!mlAccount} 
+          mlUserId={mlAccount?.mercadoLivreUserId}
+        />
+      </Suspense>
     </div>
   );
 }
