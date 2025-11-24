@@ -273,17 +273,7 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
           <div className="border-t pt-4">
             <h3 className="font-semibold text-slate-900 mb-4">Informações de Resolução</h3>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="resolutionDate">Data da Resolução</Label>
-                <Input
-                  id="resolutionDate"
-                  type="date"
-                  disabled={isLoading}
-                  {...register('resolutionDate')}
-                />
-              </div>
-
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="resolutionCost">Custo da Resolução (R$)</Label>
                 <Input
@@ -298,10 +288,11 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
                 {errors.resolutionCost && (
                   <p className="text-sm text-red-500">{errors.resolutionCost.message}</p>
                 )}
+                <p className="text-xs text-slate-500">
+                  Valor gasto para resolver este ticket (opcional)
+                </p>
               </div>
-            </div>
 
-            <div className="mt-4">
               <div className="space-y-2">
                 <Label htmlFor="affectedReputation" className="block mb-3">
                   Afetou a Reputação?
@@ -326,8 +317,11 @@ export function TicketForm({ initialData, mode }: TicketFormProps) {
                     </div>
                   )}
                 />
-                <p className="text-xs text-slate-500 mt-2">
-                  ⏱️ O tempo de resolução será calculado automaticamente quando o status for alterado para "Resolvido" ou "Fechado"
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  ℹ️ <strong>Resolução Automática:</strong> A data e o tempo de resolução serão calculados automaticamente quando o status for alterado para "Resolvido" ou "Fechado".
                 </p>
               </div>
             </div>

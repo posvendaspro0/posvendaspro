@@ -111,7 +111,6 @@ export const ticketSchema = z.object({
     .string()
     .min(1, 'Observação é obrigatória')
     .min(10, 'Observação deve ter no mínimo 10 caracteres'),
-  resolutionDate: z.string().optional(),
   resolutionCost: z
     .string()
     .optional()
