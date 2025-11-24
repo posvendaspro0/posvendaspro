@@ -207,20 +207,31 @@ export default async function VisualizarTicketPage({
       </Card>
 
       {/* Seção: Reclamação (Claim do Mercado Livre) */}
-      {ticket.mlOrderId && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <CardTitle className="text-lg">Reclamação (Mercado Livre)</CardTitle>
-              </div>
-              <Badge className="bg-blue-100 text-blue-800">
-                Integração API ML
-              </Badge>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-blue-600" />
+              <CardTitle className="text-lg">Reclamação (Mercado Livre)</CardTitle>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+            <Badge className={ticket.mlOrderId ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-600"}>
+              {ticket.mlOrderId ? "Integração API ML" : "Sem vinculação"}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {!ticket.mlOrderId ? (
+            <div className="p-6 bg-slate-50 border border-slate-200 rounded-lg text-center">
+              <Package className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-600 font-medium mb-2">
+                Ticket não vinculado ao Mercado Livre
+              </p>
+              <p className="text-sm text-slate-500">
+                Para visualizar informações de reclamação, adicione o <strong>ID do Pedido ML</strong> ao editar este ticket.
+              </p>
+            </div>
+          ) : (
+            <>
             {/* Informações da Claim */}
             <div>
               <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
@@ -336,25 +347,37 @@ export default async function VisualizarTicketPage({
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Seção: Logística de Entrega (Shipping do Mercado Livre) */}
-      {ticket.mlOrderId && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Truck className="h-5 w-5 text-green-600" />
-                <CardTitle className="text-lg">Logística de Entrega</CardTitle>
-              </div>
-              <Badge className="bg-green-100 text-green-800">
-                Integração API ML
-              </Badge>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-green-600" />
+              <CardTitle className="text-lg">Logística de Entrega</CardTitle>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+            <Badge className={ticket.mlOrderId ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-600"}>
+              {ticket.mlOrderId ? "Integração API ML" : "Sem vinculação"}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {!ticket.mlOrderId ? (
+            <div className="p-6 bg-slate-50 border border-slate-200 rounded-lg text-center">
+              <Truck className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-600 font-medium mb-2">
+                Ticket não vinculado ao Mercado Livre
+              </p>
+              <p className="text-sm text-slate-500">
+                Para visualizar informações de logística, adicione o <strong>ID do Pedido ML</strong> ao editar este ticket.
+              </p>
+            </div>
+          ) : (
+            <>
             {/* Informações do Envio */}
             <div>
               <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
@@ -499,9 +522,10 @@ export default async function VisualizarTicketPage({
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Informações de Resolução */}
       <Card>
