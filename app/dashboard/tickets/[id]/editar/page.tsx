@@ -48,14 +48,10 @@ export default async function EditarTicketPage({
           productSku: ticket.productSku || '',
           problemType: ticket.problemType,
           observation: ticket.observation,
-          resolutionDate: ticket.resolutionDate 
-            ? new Date(ticket.resolutionDate).toISOString().split('T')[0]
-            : '',
           resolutionCost: ticket.resolutionCost 
             ? Number(ticket.resolutionCost).toString()
             : '',
           affectedReputation: ticket.affectedReputation,
-          resolutionTime: ticket.resolutionTime?.toString() || '',
           clientName: ticket.clientName || '',
           clientEmail: ticket.clientEmail || '',
         }}
