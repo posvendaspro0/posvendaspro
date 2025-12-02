@@ -95,10 +95,8 @@ export async function PUT(
       productSku: data.productSku,
       problemType: data.problemType,
       observation: data.observation,
-      resolutionDate: data.resolutionDate ? new Date(data.resolutionDate) : undefined,
       resolutionCost: data.resolutionCost ? parseFloat(data.resolutionCost) : undefined,
       affectedReputation: data.affectedReputation,
-      resolutionTime: data.resolutionTime ? parseInt(data.resolutionTime, 10) : undefined,
       clientName: data.clientName,
       clientEmail: data.clientEmail,
     });
