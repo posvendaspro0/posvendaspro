@@ -13,7 +13,10 @@ Adicione estas variáveis ao seu arquivo `.env.local`:
 # Mercado Livre API
 MERCADOLIVRE_CLIENT_ID="5534728944371345"
 MERCADOLIVRE_CLIENT_SECRET="8mCKuAommoNarRs8s3HytFe8luGl7dLz"
-MERCADOLIVRE_REDIRECT_URI="http://localhost:3000/api/ml/callback"
+MERCADOLIVRE_REDIRECT_URI="http://localhost:3000/api/ml/callback" # LOCAL
+
+# Para produção use:
+# MERCADOLIVRE_REDIRECT_URI="https://www.posvendaspro.online/api/ml/callback"
 
 # Mercado Livre API URLs
 MERCADOLIVRE_API_URL="https://api.mercadolibre.com"
