@@ -3,7 +3,7 @@
 ## ✅ Credenciais Configuradas
 
 - **Client ID:** 5534728944371345
-- **Client Secret:** 8mCKuAommoNarRs8s3HytFe8luGl7dLz
+- **Client Secret:** soqSGohU8cXpK0TTUjNgFbN2CBDKNuig
 
 ## 📝 Configurar .env.local
 
@@ -12,7 +12,7 @@ Adicione estas variáveis ao seu arquivo `.env.local`:
 ```env
 # Mercado Livre API
 MERCADOLIVRE_CLIENT_ID="5534728944371345"
-MERCADOLIVRE_CLIENT_SECRET="8mCKuAommoNarRs8s3HytFe8luGl7dLz"
+MERCADOLIVRE_CLIENT_SECRET="soqSGohU8cXpK0TTUjNgFbN2CBDKNuig"
 MERCADOLIVRE_REDIRECT_URI="http://localhost:3000/api/ml/callback" # LOCAL
 
 # Para produção use:
