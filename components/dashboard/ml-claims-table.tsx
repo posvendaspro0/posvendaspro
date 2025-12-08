@@ -138,9 +138,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
             <AlertCircle className="h-4 w-4 text-slate-600" />
             <AlertDescription>
               <div className="space-y-2">
-                <p className="font-semibold">Informações de Debug:</p>
-                <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto">
-                  {JSON.stringify(debugInfo, null, 2)}
+                <p className="font-semibold text-slate-900">Informações de Debug:</p>
+                <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto max-h-96">
+                  {typeof debugInfo === 'string' ? debugInfo : JSON.stringify(debugInfo, null, 2)}
                 </pre>
               </div>
             </AlertDescription>
@@ -179,30 +179,26 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900">
-            Reclamações do Mercado Livre
-          </h3>
-          <p className="text-sm text-slate-600">
+        <div className="flex items-center gap-3">
+          <Badge className="bg-blue-100 text-blue-800">
+            Integração API ML
+          </Badge>
+          <span className="text-sm text-slate-600">
             {claims.length} reclamação(ões) encontrada(s)
-          </p>
+          </span>
         </div>
-        <Badge className="bg-blue-100 text-blue-800">
-          Integração API ML
-        </Badge>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead>ID da Claim</TableHead>
-              <TableHead>Pedido ML</TableHead>
+              <TableHead>Ticket</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Etapa</TableHead>
-              <TableHead>Motivo</TableHead>
-              <TableHead>Data de Criação</TableHead>
-              <TableHead>Reputação</TableHead>
+              <TableHead>Responsável</TableHead>
+              <TableHead>Data de Reclamação</TableHead>
+              <TableHead>Tipo de Problema</TableHead>
+              <TableHead>Reputação Afetada</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -215,49 +211,59 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
               
               return (
                 <TableRow key={claim.id} className="hover:bg-slate-50">
-                  <TableCell className="font-mono text-sm">
-                    {claim.id}
+                  {/* Ticket (ID da Claim) */}
+                  <TableCell className="font-mono text-sm font-medium">
+                    ML-{claim.id}
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {claim.resource_id || claim.resource?.id || '-'}
-                  </TableCell>
+
+                  {/* Status */}
                   <TableCell>
                     <Badge className={status.color + ' text-xs'}>
                       {status.label}
                     </Badge>
                   </TableCell>
+
+                  {/* Responsável (Etapa da claim) */}
                   <TableCell>
                     <span className="text-sm text-slate-700">
                       {stageLabels[claim.stage] || claim.stage}
                     </span>
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    <span className="text-sm text-slate-700">
-                      {claim.reason?.name || claim.reason || '-'}
-                    </span>
-                  </TableCell>
+
+                  {/* Data de Reclamação */}
                   <TableCell>
                     <div className="flex items-center gap-1 text-sm text-slate-600">
                       <Clock className="h-3 w-3" />
                       {claim.date_created 
-                        ? format(new Date(claim.date_created), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+                        ? format(new Date(claim.date_created), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
                         : '-'}
                     </div>
                   </TableCell>
+
+                  {/* Tipo de Problema (Motivo) */}
+                  <TableCell className="max-w-xs">
+                    <span className="text-sm text-slate-700 truncate block">
+                      {claim.reason?.name || claim.reason || 'Não especificado'}
+                    </span>
+                  </TableCell>
+
+                  {/* Reputação Afetada */}
                   <TableCell>
                     {claim.affects_reputation === 'affected' ? (
                       <div className="flex items-center gap-1 text-red-600">
                         <TrendingDown className="h-4 w-4" />
-                        <span className="text-xs">Afeta</span>
+                        <span className="text-xs font-medium">Sim</span>
                       </div>
                     ) : claim.affects_reputation === 'not_affected' ? (
                       <div className="flex items-center gap-1 text-green-600">
-                        <span className="text-xs">Não afeta</span>
+                        <span className="text-xs font-medium">Não</span>
                       </div>
                     ) : (
                       <span className="text-xs text-slate-500">-</span>
                     )}
                   </TableCell>
+
+                  {/* Ações */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button
@@ -271,7 +277,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           rel="noopener noreferrer"
                           className="flex items-center gap-1"
                         >
-                          <ExternalLink className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
                           Ver no ML
                         </a>
                       </Button>
