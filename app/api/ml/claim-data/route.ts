@@ -12,11 +12,11 @@ export const dynamic = 'force-dynamic';
 
 const mlClaimDataSchema = z.object({
   mlClaimId: z.string(),
-  mlOrderId: z.string().optional(),
-  responsible: z.string().optional(),
-  productSku: z.string().optional(),
-  resolutionCost: z.number().optional(),
-  observation: z.string().optional(),
+  mlOrderId: z.string().optional().nullable(),
+  responsible: z.string().optional().nullable(),
+  productSku: z.string().optional().nullable(),
+  resolutionCost: z.union([z.number(), z.string()]).optional().nullable(),
+  observation: z.string().optional().nullable(),
 });
 
 export async function POST(request: Request) {
@@ -32,9 +32,12 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    console.log('[ML Claim Data API] Recebido body:', body);
+    
     const validation = mlClaimDataSchema.safeParse(body);
 
     if (!validation.success) {
+      console.error('[ML Claim Data API] Erro de validação:', validation.error.issues);
       return NextResponse.json(
         { error: 'Dados inválidos', details: validation.error.issues },
         { status: 400 }
@@ -42,6 +45,22 @@ export async function POST(request: Request) {
     }
 
     const data = validation.data;
+
+    // Converter resolutionCost para number se for string
+    const resolutionCost = data.resolutionCost 
+      ? (typeof data.resolutionCost === 'string' ? parseFloat(data.resolutionCost) : data.resolutionCost)
+      : null;
+
+    // Converter strings vazias para null
+    const cleanData = {
+      mlOrderId: data.mlOrderId || null,
+      responsible: data.responsible || null,
+      productSku: data.productSku || null,
+      resolutionCost: resolutionCost,
+      observation: data.observation || null,
+    };
+
+    console.log('[ML Claim Data API] Dados limpos:', cleanData);
 
     // Upsert: criar ou atualizar
     const claimData = await prisma.mlClaimData.upsert({
@@ -52,23 +71,17 @@ export async function POST(request: Request) {
         },
       },
       update: {
-        mlOrderId: data.mlOrderId,
-        responsible: data.responsible,
-        productSku: data.productSku,
-        resolutionCost: data.resolutionCost,
-        observation: data.observation,
+        ...cleanData,
         updatedAt: new Date(),
       },
       create: {
         companyId,
         mlClaimId: data.mlClaimId,
-        mlOrderId: data.mlOrderId,
-        responsible: data.responsible,
-        productSku: data.productSku,
-        resolutionCost: data.resolutionCost,
-        observation: data.observation,
+        ...cleanData,
       },
     });
+
+    console.log('[ML Claim Data API] Dados salvos:', claimData.id);
 
     return NextResponse.json({ success: true, claimData });
   } catch (error) {

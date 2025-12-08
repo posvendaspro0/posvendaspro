@@ -82,30 +82,39 @@ export function MlClaimEditForm({ companyId, mlClaimId, mlOrderId }: MlClaimEdit
       setError(null);
       setSuccess(false);
 
+      // Preparar dados para envio
+      const payload = {
+        mlClaimId,
+        mlOrderId: mlOrderId || null,
+        responsible: data.responsible || null,
+        productSku: data.productSku || null,
+        resolutionCost: data.resolutionCost ? parseFloat(data.resolutionCost) : null,
+        observation: data.observation || null,
+      };
+
+      console.log('[ML Claim Edit Form] Enviando dados:', payload);
+
       const response = await fetch(`/api/ml/claim-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mlClaimId,
-          mlOrderId,
-          ...data,
-          resolutionCost: data.resolutionCost ? parseFloat(data.resolutionCost) : 0,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
+        console.error('[ML Claim Edit Form] Erro na resposta:', result);
         throw new Error(result.error || 'Erro ao salvar dados');
       }
 
+      console.log('[ML Claim Edit Form] Salvo com sucesso:', result);
       setSuccess(true);
       router.refresh();
 
       // Limpar mensagem de sucesso após 3s
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Erro ao salvar:', err);
+      console.error('[ML Claim Edit Form] Erro ao salvar:', err);
       setError(err instanceof Error ? err.message : 'Erro ao salvar dados');
     } finally {
       setSaving(false);
