@@ -193,74 +193,131 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead>Ticket</TableHead>
+              <TableHead>ID Reclamação</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Responsável</TableHead>
-              <TableHead>Data de Reclamação</TableHead>
+              <TableHead>Data Reclamação</TableHead>
+              <TableHead>Produto</TableHead>
               <TableHead>Tipo de Problema</TableHead>
-              <TableHead>Reputação Afetada</TableHead>
+              <TableHead>Data Resolução</TableHead>
+              <TableHead>Custo Resolução</TableHead>
+              <TableHead>Tempo Resolução</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {claims.map((claim) => {
-              const status = statusLabels[claim.status] || { 
-                label: claim.status, 
-                color: 'bg-slate-100 text-slate-800' 
+              // Mapear status do ML para status do sistema
+              let mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
+              
+              if (claim.stage === 'dispute' || claim.stage === 'mediation') {
+                mappedStatus = { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
+              } else if (claim.status === 'closed' || claim.status === 'won') {
+                mappedStatus = { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: '🟢' };
+              } else if (claim.stage === 'claim') {
+                mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
+              }
+
+              // Mapear tipo de problema do ML para tipos do sistema
+              const problemTypeMap: Record<string, string> = {
+                'not_received': 'Não Recebido',
+                'not_as_described': 'Enviado Errado',
+                'defective': 'Quebrado',
+                'damaged': 'Quebrado',
+                'wrong_item': 'Enviado Errado',
+                'missing_parts': 'Quantidade Incorreta',
+                'manufacturing_defect': 'Defeito Fábrica',
+                'buyer_regret': 'Arrependimento Compra',
+                'does_not_fit': 'Compatibilidade',
               };
+
+              const reasonKey = claim.reason?.id || claim.reason || '';
+              const tipoProblemaMapeado = problemTypeMap[reasonKey] || claim.reason?.name || 'Não especificado';
+
+              // Calcular tempo de resolução
+              let tempoResolucao = '-';
+              if (claim.date_created) {
+                const dataAbertura = new Date(claim.date_created);
+                const dataResolucao = claim.date_closed ? new Date(claim.date_closed) : new Date();
+                const diffMs = dataResolucao.getTime() - dataAbertura.getTime();
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                if (claim.status === 'closed' || claim.status === 'won') {
+                  tempoResolucao = diffDays > 0 
+                    ? `${diffDays}d ${diffHours}h ${diffMins}m` 
+                    : `${diffHours}h ${diffMins}m`;
+                } else {
+                  tempoResolucao = 'Em andamento';
+                }
+              }
               
               return (
                 <TableRow key={claim.id} className="hover:bg-slate-50">
-                  {/* Ticket (ID da Claim) */}
+                  {/* ID Reclamação */}
                   <TableCell className="font-mono text-sm font-medium">
-                    ML-{claim.id}
+                    {claim.resource_id || claim.resource?.id || claim.id}
                   </TableCell>
 
                   {/* Status */}
                   <TableCell>
-                    <Badge className={status.color + ' text-xs'}>
-                      {status.label}
+                    <Badge className={mappedStatus.color + ' text-xs'}>
+                      {mappedStatus.icon} {mappedStatus.label}
                     </Badge>
                   </TableCell>
 
-                  {/* Responsável (Etapa da claim) */}
+                  {/* Responsável */}
                   <TableCell>
                     <span className="text-sm text-slate-700">
-                      {stageLabels[claim.stage] || claim.stage}
+                      {claim.assigned_to || 'Não atribuído'}
                     </span>
                   </TableCell>
 
-                  {/* Data de Reclamação */}
+                  {/* Data Reclamação */}
                   <TableCell>
-                    <div className="flex items-center gap-1 text-sm text-slate-600">
-                      <Clock className="h-3 w-3" />
+                    <div className="text-sm text-slate-600">
                       {claim.date_created 
                         ? format(new Date(claim.date_created), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
                         : '-'}
                     </div>
                   </TableCell>
 
-                  {/* Tipo de Problema (Motivo) */}
-                  <TableCell className="max-w-xs">
-                    <span className="text-sm text-slate-700 truncate block">
-                      {claim.reason?.name || claim.reason || 'Não especificado'}
+                  {/* Produto (SKU) */}
+                  <TableCell>
+                    <span className="text-sm text-slate-700 font-mono">
+                      {claim.item_id || '-'}
                     </span>
                   </TableCell>
 
-                  {/* Reputação Afetada */}
+                  {/* Tipo de Problema */}
+                  <TableCell className="max-w-xs">
+                    <span className="text-sm text-slate-700 truncate block">
+                      {tipoProblemaMapeado}
+                    </span>
+                  </TableCell>
+
+                  {/* Data Resolução */}
                   <TableCell>
-                    {claim.affects_reputation === 'affected' ? (
-                      <div className="flex items-center gap-1 text-red-600">
-                        <TrendingDown className="h-4 w-4" />
-                        <span className="text-xs font-medium">Sim</span>
-                      </div>
-                    ) : claim.affects_reputation === 'not_affected' ? (
-                      <div className="flex items-center gap-1 text-green-600">
-                        <span className="text-xs font-medium">Não</span>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-slate-500">-</span>
-                    )}
+                    <div className="text-sm text-slate-600">
+                      {claim.date_closed && (claim.status === 'closed' || claim.status === 'won')
+                        ? format(new Date(claim.date_closed), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                        : '-'}
+                    </div>
+                  </TableCell>
+
+                  {/* Custo Resolução */}
+                  <TableCell>
+                    <span className="text-sm text-slate-700 font-mono">
+                      R$ {claim.resolution_amount ? Number(claim.resolution_amount).toFixed(2) : '0,00'}
+                    </span>
+                  </TableCell>
+
+                  {/* Tempo Resolução */}
+                  <TableCell>
+                    <span className="text-sm text-slate-700">
+                      {tempoResolucao}
+                    </span>
                   </TableCell>
 
                   {/* Ações */}
@@ -278,7 +335,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           className="flex items-center gap-1"
                         >
                           <Eye className="h-4 w-4" />
-                          Ver no ML
+                          Detalhes
                         </a>
                       </Button>
                     </div>
