@@ -4,21 +4,14 @@
  */
 
 import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth-utils';
+import { requireClient } from '@/lib/auth-helpers';
 import { getValidAccessToken, getClaims } from '@/services/mercadolivre-service';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    const session = await requireAuth();
-    
-    if (session.user.role !== 'CLIENT') {
-      return NextResponse.json(
-        { error: 'Apenas clientes podem acessar esta rota' },
-        { status: 403 }
-      );
-    }
+    const session = await requireClient();
 
     const companyId = session.user.companyId;
 

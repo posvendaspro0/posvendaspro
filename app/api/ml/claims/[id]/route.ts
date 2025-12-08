@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth-utils';
+import { requireClient } from '@/lib/auth-helpers';
 import {
   getValidAccessToken,
   getClaim,
@@ -21,14 +21,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAuth();
-    
-    if (session.user.role !== 'CLIENT') {
-      return NextResponse.json(
-        { error: 'Apenas clientes podem acessar esta rota' },
-        { status: 403 }
-      );
-    }
+    const session = await requireClient();
 
     const { id: claimId } = await params;
     const companyId = session.user.companyId;
