@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireClient } from '@/lib/auth-helpers';
-import { getValidAccessToken, getClaims } from '@/services/mercadolivre-service';
+import { getValidAccessToken, getClaims, getMlAccountByCompanyId } from '@/services/mercadolivre-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,22 +25,36 @@ export async function GET(request: Request) {
       );
     }
 
-    // Buscar access token válido
-    console.log('[ML Claims API] Buscando token para empresa:', companyId);
+    // Buscar conta ML e access token válido
+    console.log('[ML Claims API] Buscando conta ML para empresa:', companyId);
+    
+    const mlAccount = await getMlAccountByCompanyId(companyId);
+    
+    if (!mlAccount) {
+      console.log('[ML Claims API] Conta ML não encontrada para empresa:', companyId);
+      return NextResponse.json(
+        { 
+          error: 'Conta do Mercado Livre não conectada. Por favor, conecte sua conta na página de Integrações.', 
+          connected: false 
+        },
+        { status: 200 }
+      );
+    }
+
     const accessToken = await getValidAccessToken(companyId);
     
     if (!accessToken) {
       console.log('[ML Claims API] Token não encontrado para empresa:', companyId);
       return NextResponse.json(
         { 
-          error: 'Conta do Mercado Livre não conectada. Por favor, conecte sua conta na página de Integrações.', 
+          error: 'Token do Mercado Livre inválido. Por favor, reconecte sua conta.', 
           connected: false 
         },
-        { status: 200 } // Mudar para 200 para não causar erro no frontend
+        { status: 200 }
       );
     }
 
-    console.log('[ML Claims API] Token encontrado, buscando reclamações...');
+    console.log('[ML Claims API] Token encontrado. User ID:', mlAccount.mercadoLivreUserId);
 
     // Extrair filtros da query string
     const { searchParams } = new URL(request.url);
@@ -55,6 +69,7 @@ export async function GET(request: Request) {
         offset,
         limit,
         status,
+        userId: mlAccount.mercadoLivreUserId, // ID do usuário no ML (obrigatório)
       });
       
       console.log('[ML Claims API] Reclamações encontradas:', claims.data?.length || 0);

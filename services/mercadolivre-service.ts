@@ -188,27 +188,34 @@ export async function getOrder(accessToken: string, orderId: string) {
 
 /**
  * Lista reclamações (claims) do vendedor
- * IMPORTANTE: A API ML exige pelo menos um filtro além de offset/limit
+ * IMPORTANTE: A API ML exige player_role AND player_user_id
  */
 export async function getClaims(accessToken: string, filters: {
   offset?: number;
   limit?: number;
   status?: string;
+  userId?: string; // ID do usuário no Mercado Livre (obrigatório)
   siteId?: string;
 } = {}) {
   const params = new URLSearchParams({
     offset: String(filters.offset || 0),
     limit: String(filters.limit || 50),
-    // OBRIGATÓRIO: player_role=respondent para buscar claims onde somos o vendedor
-    player_role: 'respondent',
   });
+
+  // OBRIGATÓRIO: player_role=respondent (somos o vendedor)
+  params.append('player_role', 'respondent');
+  
+  // OBRIGATÓRIO: player_user_id (ID do usuário no ML)
+  if (filters.userId) {
+    params.append('player_user_id', filters.userId);
+    console.log('[ML Service] Usando player_user_id:', filters.userId);
+  } else {
+    console.warn('[ML Service] AVISO: player_user_id não fornecido! A API pode rejeitar a requisição.');
+  }
 
   // Adicionar site_id se fornecido (MLB = Brasil)
   if (filters.siteId) {
     params.append('site_id', filters.siteId);
-  } else {
-    // Padrão: Brasil
-    params.append('site_id', 'MLB');
   }
 
   // Adicionar status se fornecido
