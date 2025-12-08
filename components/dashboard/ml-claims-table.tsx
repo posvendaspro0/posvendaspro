@@ -51,19 +51,26 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
         
         console.log('[ML Claims Table] Resposta recebida:', response.status);
         const data = await response.json();
-        console.log('[ML Claims Table] Dados:', data);
+        console.log('[ML Claims Table] Dados completos:', data);
 
         if (!data.connected) {
           const errorMsg = data.error || 'Conecte sua conta do Mercado Livre para ver as reclamações';
           console.log('[ML Claims Table] Não conectado:', errorMsg);
-          setError(errorMsg);
+          
+          // Se tem detalhes, adicionar ao erro
+          const fullError = data.details ? `${errorMsg}\n\nDetalhes técnicos: ${data.details}` : errorMsg;
+          
+          setError(fullError);
+          setDebugInfo(data);
           setClaims([]);
           onClaimsLoaded?.(0);
           return;
         }
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro ao buscar reclamações');
+        if (!response.ok && response.status !== 200) {
+          const errorMsg = data.error || 'Erro ao buscar reclamações';
+          const fullError = data.details ? `${errorMsg}\n\nDetalhes: ${data.details}` : errorMsg;
+          throw new Error(fullError);
         }
 
         console.log('[ML Claims Table] Claims encontradas:', data.claims?.length || 0);

@@ -94,21 +94,64 @@ export async function refreshAccessToken(refreshToken: string) {
  * Faz chamada autenticada à API do ML
  */
 async function mlApiCall(endpoint: string, accessToken: string, options: RequestInit = {}) {
-  const response = await fetch(`${ML_API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Accept': 'application/json',
-      ...options.headers,
-    },
+  const fullUrl = `${ML_API_URL}${endpoint}`;
+  
+  console.log('[ML API Call] Iniciando chamada:', {
+    url: fullUrl,
+    method: options.method || 'GET',
+    hasToken: !!accessToken,
+    tokenPrefix: accessToken ? accessToken.substring(0, 20) + '...' : 'N/A'
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Erro na API ML: ${response.status} - ${error}`);
-  }
+  try {
+    const response = await fetch(fullUrl, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json',
+        ...options.headers,
+      },
+    });
 
-  return response.json();
+    console.log('[ML API Call] Resposta recebida:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorDetails;
+      
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch {
+        errorDetails = errorText;
+      }
+
+      console.error('[ML API Call] Erro na resposta:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorDetails
+      });
+
+      throw new Error(`API ML retornou ${response.status}: ${JSON.stringify(errorDetails)}`);
+    }
+
+    const data = await response.json();
+    console.log('[ML API Call] Dados recebidos com sucesso:', {
+      hasData: !!data,
+      dataKeys: data ? Object.keys(data) : []
+    });
+
+    return data;
+  } catch (error) {
+    console.error('[ML API Call] Erro na chamada:', {
+      error: error instanceof Error ? error.message : String(error),
+      endpoint: fullUrl
+    });
+    throw error;
+  }
 }
 
 /**

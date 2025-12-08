@@ -49,37 +49,81 @@ export async function GET(request: Request) {
     const status = searchParams.get('status') || undefined;
 
     // Buscar reclamações na API do ML
-    const claims = await getClaims(accessToken, {
-      offset,
-      limit,
-      status,
-    });
-
-    console.log('[ML Claims API] Reclamações encontradas:', claims.data?.length || 0);
-
-    return NextResponse.json({
-      connected: true,
-      claims: claims.data || [],
-      paging: claims.paging || {},
-    });
-  } catch (error) {
-    console.error('[ML Claims API] Erro ao buscar reclamações:', error);
-    
-    // Se for erro de autenticação da API ML
-    if (error instanceof Error && error.message.includes('401')) {
+    let claims;
+    try {
+      claims = await getClaims(accessToken, {
+        offset,
+        limit,
+        status,
+      });
+      
+      console.log('[ML Claims API] Reclamações encontradas:', claims.data?.length || 0);
+    } catch (mlError) {
+      console.error('[ML Claims API] Erro ao chamar API ML:', mlError);
+      
+      // Capturar detalhes do erro
+      const errorMessage = mlError instanceof Error ? mlError.message : String(mlError);
+      
+      // Se for erro 401 (não autorizado)
+      if (errorMessage.includes('401')) {
+        return NextResponse.json(
+          { 
+            error: 'Token do Mercado Livre inválido ou expirado. Por favor, reconecte sua conta.', 
+            connected: false,
+            details: errorMessage
+          },
+          { status: 200 }
+        );
+      }
+      
+      // Se for erro 403 (sem permissão)
+      if (errorMessage.includes('403')) {
+        return NextResponse.json(
+          { 
+            error: 'Sem permissão para acessar reclamações. Verifique as permissões do aplicativo no Mercado Livre.', 
+            connected: false,
+            details: errorMessage
+          },
+          { status: 200 }
+        );
+      }
+      
+      // Se for erro 404 (endpoint não encontrado)
+      if (errorMessage.includes('404')) {
+        return NextResponse.json(
+          { 
+            error: 'Endpoint de reclamações não encontrado. Pode não haver reclamações ou o endpoint mudou.', 
+            connected: true,
+            claims: [],
+            details: errorMessage
+          },
+          { status: 200 }
+        );
+      }
+      
+      // Erro genérico da API ML
       return NextResponse.json(
         { 
-          error: 'Token do Mercado Livre expirado. Reconecte sua conta.', 
-          connected: false 
+          error: 'Erro ao buscar reclamações do Mercado Livre', 
+          connected: false,
+          details: errorMessage
         },
         { status: 200 }
       );
     }
+
+    return NextResponse.json({
+      connected: true,
+      claims: claims.data || claims.results || claims || [],
+      paging: claims.paging || {},
+    });
+  } catch (error) {
+    console.error('[ML Claims API] Erro geral:', error);
     
     return NextResponse.json(
       { 
-        error: 'Erro ao buscar reclamações', 
-        details: String(error),
+        error: 'Erro interno ao processar requisição', 
+        details: error instanceof Error ? error.message : String(error),
         connected: false 
       },
       { status: 500 }
