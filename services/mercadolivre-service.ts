@@ -3,6 +3,8 @@
  * Gerencia autenticação OAuth2 e chamadas à API
  */
 
+import { prisma } from '@/lib/prisma';
+
 const ML_API_URL = process.env.MERCADOLIVRE_API_URL || 'https://api.mercadolibre.com';
 const ML_AUTH_URL = process.env.MERCADOLIVRE_AUTH_URL || 'https://auth.mercadolivre.com.br';
 const CLIENT_ID = process.env.MERCADOLIVRE_CLIENT_ID!;
@@ -234,5 +236,138 @@ export async function declineClaim(accessToken: string, claimId: string, reason:
       reason,
     }),
   });
+}
+
+/**
+ * Busca mensagens de uma reclamação
+ */
+export async function getClaimMessages(accessToken: string, claimId: string) {
+  return mlApiCall(`/post-purchase/v1/claims/${claimId}/messages`, accessToken);
+}
+
+/**
+ * Busca histórico de ações de uma reclamação
+ */
+export async function getClaimActionsHistory(accessToken: string, claimId: string) {
+  return mlApiCall(`/post-purchase/v1/claims/${claimId}/actions-history`, accessToken);
+}
+
+/**
+ * Busca histórico de status de uma reclamação
+ */
+export async function getClaimStatusHistory(accessToken: string, claimId: string) {
+  return mlApiCall(`/post-purchase/v1/claims/${claimId}/status-history`, accessToken);
+}
+
+/**
+ * Verifica se uma reclamação afeta a reputação
+ */
+export async function getClaimAffectsReputation(accessToken: string, claimId: string) {
+  return mlApiCall(`/post-purchase/v1/claims/${claimId}/affects-reputation`, accessToken);
+}
+
+/**
+ * Busca motivos disponíveis para reclamações
+ */
+export async function getClaimReasons(accessToken: string, siteId: string) {
+  return mlApiCall(`/post-purchase/v1/claims/reasons?site_id=${siteId}`, accessToken);
+}
+
+/**
+ * Busca detalhes de um motivo específico
+ */
+export async function getClaimReason(accessToken: string, reasonId: string) {
+  return mlApiCall(`/post-purchase/v1/claims/reasons/${reasonId}`, accessToken);
+}
+
+// ============================================
+// MÉTODOS DE BANCO DE DADOS (Prisma)
+// ============================================
+
+/**
+ * Salva ou atualiza a conta ML no banco de dados
+ */
+export async function saveMlAccount(
+  companyId: string,
+  userId: string,
+  accessToken: string,
+  refreshToken: string,
+  expiresIn: number
+) {
+  const expiresAt = new Date(Date.now() + expiresIn * 1000);
+
+  return prisma.mlAccount.upsert({
+    where: { companyId },
+    update: {
+      userId,
+      accessToken,
+      refreshToken,
+      expiresAt,
+    },
+    create: {
+      companyId,
+      userId,
+      accessToken,
+      refreshToken,
+      expiresAt,
+    },
+  });
+}
+
+/**
+ * Busca a conta ML de uma empresa
+ */
+export async function getMlAccountByCompanyId(companyId: string) {
+  return prisma.mlAccount.findUnique({
+    where: { companyId },
+  });
+}
+
+/**
+ * Remove a conta ML de uma empresa
+ */
+export async function disconnectMlAccount(companyId: string) {
+  return prisma.mlAccount.delete({
+    where: { companyId },
+  });
+}
+
+/**
+ * Verifica se o token está expirado e renova se necessário
+ */
+export async function getValidAccessToken(companyId: string): Promise<string | null> {
+  const mlAccount = await getMlAccountByCompanyId(companyId);
+  
+  if (!mlAccount) {
+    return null;
+  }
+
+  // Se o token ainda é válido (com margem de 5 minutos)
+  const now = new Date();
+  const expiresAt = new Date(mlAccount.expiresAt);
+  const marginMs = 5 * 60 * 1000; // 5 minutos
+
+  if (expiresAt.getTime() - now.getTime() > marginMs) {
+    return mlAccount.accessToken;
+  }
+
+  // Token expirado ou próximo de expirar, renovar
+  try {
+    const tokens = await refreshAccessToken(mlAccount.refreshToken);
+    
+    // Atualizar no banco
+    await saveMlAccount(
+      companyId,
+      mlAccount.userId,
+      tokens.accessToken,
+      tokens.refreshToken,
+      tokens.expiresIn
+    );
+
+    return tokens.accessToken;
+  } catch (error) {
+    console.error('Erro ao renovar token:', error);
+    return null;
+  }
 }
 
