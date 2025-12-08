@@ -37,6 +37,8 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [claims, setClaims] = useState<any[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     async function fetchClaims() {
@@ -44,25 +46,31 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
         setLoading(true);
         setError(null);
 
+        console.log('[ML Claims Table] Iniciando busca de reclamações...');
         const response = await fetch('/api/ml/claims?limit=100');
         
-        if (!response.ok) {
-          throw new Error('Erro ao buscar reclamações');
-        }
-
+        console.log('[ML Claims Table] Resposta recebida:', response.status);
         const data = await response.json();
+        console.log('[ML Claims Table] Dados:', data);
 
         if (!data.connected) {
-          setError('Conecte sua conta do Mercado Livre para ver as reclamações');
+          const errorMsg = data.error || 'Conecte sua conta do Mercado Livre para ver as reclamações';
+          console.log('[ML Claims Table] Não conectado:', errorMsg);
+          setError(errorMsg);
           setClaims([]);
           onClaimsLoaded?.(0);
           return;
         }
 
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro ao buscar reclamações');
+        }
+
+        console.log('[ML Claims Table] Claims encontradas:', data.claims?.length || 0);
         setClaims(data.claims || []);
         onClaimsLoaded?.(data.claims?.length || 0);
       } catch (err) {
-        console.error('Erro ao buscar claims:', err);
+        console.error('[ML Claims Table] Erro ao buscar claims:', err);
         setError(err instanceof Error ? err.message : 'Erro desconhecido');
         setClaims([]);
         onClaimsLoaded?.(0);
@@ -83,17 +91,55 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     );
   }
 
+  const checkStatus = async () => {
+    try {
+      const response = await fetch('/api/ml/status');
+      const data = await response.json();
+      setDebugInfo(data);
+      setShowDebug(true);
+    } catch (err) {
+      console.error('Erro ao verificar status:', err);
+    }
+  };
+
   if (error) {
     return (
-      <Alert className="border-blue-200 bg-blue-50">
-        <AlertCircle className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          <strong>Integração Mercado Livre:</strong> {error}
-          <Link href="/dashboard/integracao" className="ml-2 underline">
-            Conectar agora
-          </Link>
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-4">
+        <Alert className="border-blue-200 bg-blue-50">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <strong>Integração Mercado Livre:</strong> {error}
+                <Link href="/dashboard/integracao" className="ml-2 underline">
+                  Conectar agora
+                </Link>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={checkStatus}
+              >
+                Ver Detalhes
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+
+        {showDebug && debugInfo && (
+          <Alert className="border-slate-200 bg-slate-50">
+            <AlertCircle className="h-4 w-4 text-slate-600" />
+            <AlertDescription>
+              <div className="space-y-2">
+                <p className="font-semibold">Informações de Debug:</p>
+                <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
     );
   }
 

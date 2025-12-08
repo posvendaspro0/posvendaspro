@@ -336,24 +336,39 @@ export async function disconnectMlAccount(companyId: string) {
  * Verifica se o token está expirado e renova se necessário
  */
 export async function getValidAccessToken(companyId: string): Promise<string | null> {
+  console.log('[ML Service] Buscando conta ML para empresa:', companyId);
+  
   const mlAccount = await getMlAccountByCompanyId(companyId);
   
   if (!mlAccount) {
+    console.log('[ML Service] Nenhuma conta ML encontrada para empresa:', companyId);
     return null;
   }
+
+  console.log('[ML Service] Conta ML encontrada:', {
+    userId: mlAccount.mercadoLivreUserId,
+    expiresAt: mlAccount.expiresAt,
+    isActive: mlAccount.isActive
+  });
 
   // Se o token ainda é válido (com margem de 5 minutos)
   const now = new Date();
   const expiresAt = new Date(mlAccount.expiresAt);
   const marginMs = 5 * 60 * 1000; // 5 minutos
+  const timeUntilExpiry = expiresAt.getTime() - now.getTime();
 
-  if (expiresAt.getTime() - now.getTime() > marginMs) {
+  if (timeUntilExpiry > marginMs) {
+    console.log('[ML Service] Token ainda válido. Expira em:', Math.floor(timeUntilExpiry / 1000 / 60), 'minutos');
     return mlAccount.accessToken;
   }
+
+  console.log('[ML Service] Token expirado ou próximo de expirar. Renovando...');
 
   // Token expirado ou próximo de expirar, renovar
   try {
     const tokens = await refreshAccessToken(mlAccount.refreshToken);
+    
+    console.log('[ML Service] Token renovado com sucesso');
     
     // Atualizar no banco
     await saveMlAccount(
@@ -366,7 +381,12 @@ export async function getValidAccessToken(companyId: string): Promise<string | n
 
     return tokens.accessToken;
   } catch (error) {
-    console.error('Erro ao renovar token:', error);
+    console.error('[ML Service] Erro ao renovar token:', error);
+    console.error('[ML Service] Detalhes do erro:', {
+      message: error instanceof Error ? error.message : String(error),
+      companyId,
+      userId: mlAccount.mercadoLivreUserId
+    });
     return null;
   }
 }

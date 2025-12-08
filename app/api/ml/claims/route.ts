@@ -17,20 +17,30 @@ export async function GET(request: Request) {
 
     if (!companyId) {
       return NextResponse.json(
-        { error: 'Usuário não está vinculado a uma empresa' },
+        { 
+          error: 'Usuário não está vinculado a uma empresa',
+          connected: false 
+        },
         { status: 400 }
       );
     }
 
     // Buscar access token válido
+    console.log('[ML Claims API] Buscando token para empresa:', companyId);
     const accessToken = await getValidAccessToken(companyId);
     
     if (!accessToken) {
+      console.log('[ML Claims API] Token não encontrado para empresa:', companyId);
       return NextResponse.json(
-        { error: 'Conta do Mercado Livre não conectada', connected: false },
-        { status: 401 }
+        { 
+          error: 'Conta do Mercado Livre não conectada. Por favor, conecte sua conta na página de Integrações.', 
+          connected: false 
+        },
+        { status: 200 } // Mudar para 200 para não causar erro no frontend
       );
     }
+
+    console.log('[ML Claims API] Token encontrado, buscando reclamações...');
 
     // Extrair filtros da query string
     const { searchParams } = new URL(request.url);
@@ -45,15 +55,33 @@ export async function GET(request: Request) {
       status,
     });
 
+    console.log('[ML Claims API] Reclamações encontradas:', claims.data?.length || 0);
+
     return NextResponse.json({
       connected: true,
       claims: claims.data || [],
       paging: claims.paging || {},
     });
   } catch (error) {
-    console.error('Erro ao buscar reclamações:', error);
+    console.error('[ML Claims API] Erro ao buscar reclamações:', error);
+    
+    // Se for erro de autenticação da API ML
+    if (error instanceof Error && error.message.includes('401')) {
+      return NextResponse.json(
+        { 
+          error: 'Token do Mercado Livre expirado. Reconecte sua conta.', 
+          connected: false 
+        },
+        { status: 200 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Erro ao buscar reclamações', details: String(error) },
+      { 
+        error: 'Erro ao buscar reclamações', 
+        details: String(error),
+        connected: false 
+      },
       { status: 500 }
     );
   }
