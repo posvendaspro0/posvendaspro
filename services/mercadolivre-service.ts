@@ -289,7 +289,7 @@ export async function getClaimReason(accessToken: string, reasonId: string) {
  */
 export async function saveMlAccount(
   companyId: string,
-  userId: string,
+  mercadoLivreUserId: string,
   accessToken: string,
   refreshToken: string,
   expiresIn: number
@@ -299,14 +299,14 @@ export async function saveMlAccount(
   return prisma.mlAccount.upsert({
     where: { companyId },
     update: {
-      userId,
+      mercadoLivreUserId,
       accessToken,
       refreshToken,
       expiresAt,
     },
     create: {
       companyId,
-      userId,
+      mercadoLivreUserId,
       accessToken,
       refreshToken,
       expiresAt,
@@ -358,7 +358,7 @@ export async function getValidAccessToken(companyId: string): Promise<string | n
     // Atualizar no banco
     await saveMlAccount(
       companyId,
-      mlAccount.userId,
+      mlAccount.mercadoLivreUserId,
       tokens.accessToken,
       tokens.refreshToken,
       tokens.expiresIn
