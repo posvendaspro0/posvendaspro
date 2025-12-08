@@ -22,8 +22,6 @@ import {
   Eye,
   Loader2,
   AlertCircle,
-  ExternalLink,
-  TrendingDown,
   Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -324,19 +322,14 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         asChild
                       >
-                        <a
-                          href={`https://www.mercadolivre.com.br/vendas/${claim.resource_id || claim.resource?.id}/detalhes`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1"
-                        >
+                        <Link href={`/dashboard/reclamacoes/${claim.id}`}>
                           <Eye className="h-4 w-4" />
-                          Detalhes
-                        </a>
+                          Editar
+                        </Link>
                       </Button>
                     </div>
                   </TableCell>

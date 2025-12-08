@@ -60,10 +60,11 @@ model Company {
   updatedAt DateTime @updatedAt
 
   // Relações
-  users      User[]
-  mlAccounts MlAccount[]
-  tickets    Ticket[]
-  operators  Operator[]
+  users        User[]
+  mlAccounts   MlAccount[]
+  mlClaimData  MlClaimData[]
+  tickets      Ticket[]
+  operators    Operator[]
 
   @@map("companies")
 }
@@ -150,6 +151,31 @@ model MlAccount {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("ml_accounts")
+}
+
+model MlClaimData {
+  id                String   @id @default(cuid())
+  companyId         String   // Empresa dona da reclamação
+  mlClaimId         String   // ID da claim no Mercado Livre
+  mlOrderId         String?  // ID do pedido no ML
+  
+  // Campos editáveis pelo usuário
+  responsible       String?  // Responsável pelo atendimento
+  productSku        String?  // SKU do produto
+  resolutionCost    Decimal? @default(0) @db.Decimal(10, 2) // Custo de resolução
+  observation       String?  @db.Text // Observações sobre o caso
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relações
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Índices
+  @@unique([companyId, mlClaimId])
+  @@index([mlClaimId])
+  @@index([mlOrderId])
+  @@map("ml_claim_data")
 }
 
 // Tabela de Tickets (antiga Complaints/Reclamações)
