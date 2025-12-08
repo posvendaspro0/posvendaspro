@@ -73,6 +73,44 @@ export async function GET(request: Request) {
       });
       
       console.log('[ML Claims API] Reclamações encontradas:', claims.data?.length || 0);
+
+      // Buscar dados complementares do banco para cada claim
+      if (claims.data && claims.data.length > 0) {
+        const claimIds = claims.data.map((claim: any) => String(claim.id));
+        
+        // Buscar todos os dados complementares de uma vez
+        const { prisma } = await import('@/lib/prisma');
+        const complementaryData = await prisma.mlClaimData.findMany({
+          where: {
+            companyId,
+            mlClaimId: {
+              in: claimIds,
+            },
+          },
+        });
+
+        // Criar um map para acesso rápido
+        const dataMap = new Map(
+          complementaryData.map(item => [item.mlClaimId, item])
+        );
+
+        // Mesclar dados ML + dados complementares
+        claims.data = claims.data.map((claim: any) => {
+          const extra = dataMap.get(String(claim.id));
+          return {
+            ...claim,
+            // Adicionar dados complementares
+            _complementary: extra ? {
+              responsible: extra.responsible,
+              productSku: extra.productSku,
+              resolutionCost: extra.resolutionCost ? Number(extra.resolutionCost) : null,
+              observation: extra.observation,
+            } : null,
+          };
+        });
+
+        console.log('[ML Claims API] Dados complementares mesclados');
+      }
     } catch (mlError) {
       console.error('[ML Claims API] Erro ao chamar API ML:', mlError);
       

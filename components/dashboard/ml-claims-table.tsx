@@ -268,7 +268,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   {/* Responsável */}
                   <TableCell>
                     <span className="text-sm text-slate-700">
-                      {claim.assigned_to || 'Não atribuído'}
+                      {claim._complementary?.responsible || claim.assigned_to || 'Não atribuído'}
                     </span>
                   </TableCell>
 
@@ -284,7 +284,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   {/* Produto (SKU) */}
                   <TableCell>
                     <span className="text-sm text-slate-700 font-mono">
-                      {claim.item_id || '-'}
+                      {claim._complementary?.productSku || claim.item_id || '-'}
                     </span>
                   </TableCell>
 
@@ -307,7 +307,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   {/* Custo Resolução */}
                   <TableCell>
                     <span className="text-sm text-slate-700 font-mono">
-                      R$ {claim.resolution_amount ? Number(claim.resolution_amount).toFixed(2) : '0,00'}
+                      R$ {claim._complementary?.resolutionCost 
+                        ? Number(claim._complementary.resolutionCost).toFixed(2)
+                        : (claim.resolution_amount ? Number(claim.resolution_amount).toFixed(2) : '0,00')}
                     </span>
                   </TableCell>
 
