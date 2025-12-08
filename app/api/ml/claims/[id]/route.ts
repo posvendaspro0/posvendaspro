@@ -26,6 +26,13 @@ export async function GET(
     const { id: claimId } = await params;
     const companyId = session.user.companyId;
 
+    if (!companyId) {
+      return NextResponse.json(
+        { error: 'Usuário não está vinculado a uma empresa' },
+        { status: 400 }
+      );
+    }
+
     // Buscar access token válido
     const accessToken = await getValidAccessToken(companyId);
     
