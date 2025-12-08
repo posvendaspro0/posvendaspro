@@ -137,7 +137,7 @@ model VerificationToken {
 // TODO: Implementar lógica de OAuth e refresh tokens quando integrar API ML
 model MlAccount {
   id                  String   @id @default(cuid())
-  companyId           String
+  companyId           String   @unique // Cada empresa pode ter apenas uma conta ML
   mercadoLivreUserId  String   @unique // ID do usuário no Mercado Livre
   accessToken         String   @db.Text // Token de acesso (criptografado recomendado)
   refreshToken        String   @db.Text // Token para renovação
@@ -149,7 +149,6 @@ model MlAccount {
   // Relações
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  @@index([companyId])
   @@map("ml_accounts")
 }
 
