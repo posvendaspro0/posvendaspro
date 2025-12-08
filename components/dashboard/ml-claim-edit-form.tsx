@@ -84,8 +84,8 @@ export function MlClaimEditForm({ companyId, mlClaimId, mlOrderId }: MlClaimEdit
 
       // Preparar dados para envio
       const payload = {
-        mlClaimId,
-        mlOrderId: mlOrderId || null,
+        mlClaimId: String(mlClaimId),  // ✅ Converter para string
+        mlOrderId: mlOrderId ? String(mlOrderId) : null,  // ✅ Converter para string
         responsible: data.responsible || null,
         productSku: data.productSku || null,
         resolutionCost: data.resolutionCost ? parseFloat(data.resolutionCost) : null,
