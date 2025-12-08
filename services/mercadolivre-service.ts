@@ -188,20 +188,35 @@ export async function getOrder(accessToken: string, orderId: string) {
 
 /**
  * Lista reclamações (claims) do vendedor
+ * IMPORTANTE: A API ML exige pelo menos um filtro além de offset/limit
  */
 export async function getClaims(accessToken: string, filters: {
   offset?: number;
   limit?: number;
   status?: string;
+  siteId?: string;
 } = {}) {
   const params = new URLSearchParams({
     offset: String(filters.offset || 0),
     limit: String(filters.limit || 50),
+    // OBRIGATÓRIO: player_role=respondent para buscar claims onde somos o vendedor
+    player_role: 'respondent',
   });
 
+  // Adicionar site_id se fornecido (MLB = Brasil)
+  if (filters.siteId) {
+    params.append('site_id', filters.siteId);
+  } else {
+    // Padrão: Brasil
+    params.append('site_id', 'MLB');
+  }
+
+  // Adicionar status se fornecido
   if (filters.status) {
     params.append('status', filters.status);
   }
+
+  console.log('[ML Service] Buscando claims com filtros:', params.toString());
 
   return mlApiCall(`/post-purchase/v1/claims/search?${params.toString()}`, accessToken);
 }
