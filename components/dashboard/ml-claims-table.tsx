@@ -692,6 +692,83 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
         </Card>
       )}
 
+      {/* Legenda de Status */}
+      {hasAnyClaims && (
+        <Card className="border-slate-200 bg-gradient-to-br from-slate-50 to-white">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="rounded-lg bg-blue-100 p-2">
+                <FileText className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900">Legenda de Status</h3>
+                <p className="text-xs text-slate-600 mt-0.5">Entenda o significado de cada status e quando agir</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Status: Não Iniciada */}
+              <div className="border border-slate-200 rounded-lg p-3 bg-white hover:shadow-sm transition-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <Circle className="h-4 w-4 text-slate-600" />
+                  <span className="font-semibold text-slate-900 text-sm">Não Iniciada</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Reclamação criada pelo comprador. <strong className="text-slate-900">Responda em até 2-3 dias</strong> para evitar que escale.
+                </p>
+              </div>
+
+              {/* Status: Aberta */}
+              <div className="border border-orange-200 rounded-lg p-3 bg-orange-50 hover:shadow-sm transition-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <span className="font-semibold text-orange-900 text-sm">Aberta</span>
+                </div>
+                <p className="text-xs text-orange-700 leading-relaxed">
+                  Aguardando ação. <strong className="text-orange-900">Urgente!</strong> Propor solução, oferecer reembolso ou troca o quanto antes.
+                </p>
+              </div>
+
+              {/* Status: Em Andamento */}
+              <div className="border border-blue-200 rounded-lg p-3 bg-blue-50 hover:shadow-sm transition-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <PlayCircle className="h-4 w-4 text-blue-600" />
+                  <span className="font-semibold text-blue-900 text-sm">Em Andamento</span>
+                </div>
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  Disputa ou mediação do ML. <strong className="text-blue-900">Envie evidências</strong> (fotos, notas, rastreio) para defender seu caso.
+                </p>
+              </div>
+
+              {/* Status: Concluída */}
+              <div className="border border-green-200 rounded-lg p-3 bg-green-50 hover:shadow-sm transition-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <span className="font-semibold text-green-900 text-sm">Concluída</span>
+                </div>
+                <p className="text-xs text-green-700 leading-relaxed">
+                  Resolvida ou fechada. <strong className="text-green-900">Caso encerrado.</strong> Pode ter sido resolvida amigavelmente ou você ganhou a disputa.
+                </p>
+              </div>
+            </div>
+
+            {/* Dica Pro */}
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-amber-900 mb-1">💡 Dica Profissional</p>
+                  <p className="text-xs text-amber-700">
+                    <strong>Priorize:</strong> Disputas/Mediações (urgente!) → Abertas +48h (risco alto) → Abertas recentes (resolver rápido). 
+                    Responder em até 24h reduz drasticamente o risco de impacto na reputação.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Mensagem quando filtros não retornam resultados */}
       {hasAnyClaims && !hasFilteredClaims && (
         <Card className="border-orange-200 bg-orange-50">
