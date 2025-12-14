@@ -443,142 +443,143 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
             </TableHeader>
             <TableBody>
               {filteredClaims.map((claim) => {
-              // Mapear status do ML para status do sistema
-              let mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
-              
-              if (claim.stage === 'dispute' || claim.stage === 'mediation') {
-                mappedStatus = { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
-              } else if (claim.status === 'closed' || claim.status === 'won') {
-                mappedStatus = { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: '🟢' };
-              } else if (claim.stage === 'claim') {
-                mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
-              }
-
-              // Mapear tipo de problema do ML para tipos do sistema
-              const problemTypeMap: Record<string, string> = {
-                'not_received': 'Não Recebido',
-                'not_as_described': 'Enviado Errado',
-                'defective': 'Quebrado',
-                'damaged': 'Quebrado',
-                'wrong_item': 'Enviado Errado',
-                'missing_parts': 'Quantidade Incorreta',
-                'manufacturing_defect': 'Defeito Fábrica',
-                'buyer_regret': 'Arrependimento Compra',
-                'does_not_fit': 'Compatibilidade',
-              };
-
-              const reasonKey = claim.reason?.id || claim.reason || '';
-              const tipoProblemaMapeado = problemTypeMap[reasonKey] || claim.reason?.name || 'Não especificado';
-
-              // Calcular tempo de resolução
-              let tempoResolucao = '-';
-              if (claim.date_created) {
-                const dataAbertura = new Date(claim.date_created);
-                const dataResolucao = claim.date_closed ? new Date(claim.date_closed) : new Date();
-                const diffMs = dataResolucao.getTime() - dataAbertura.getTime();
-                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                // Mapear status do ML para status do sistema
+                let mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
                 
-                if (claim.status === 'closed' || claim.status === 'won') {
-                  tempoResolucao = diffDays > 0 
-                    ? `${diffDays}d ${diffHours}h ${diffMins}m` 
-                    : `${diffHours}h ${diffMins}m`;
-                } else {
-                  tempoResolucao = 'Em andamento';
+                if (claim.stage === 'dispute' || claim.stage === 'mediation') {
+                  mappedStatus = { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
+                } else if (claim.status === 'closed' || claim.status === 'won') {
+                  mappedStatus = { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: '🟢' };
+                } else if (claim.stage === 'claim') {
+                  mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
                 }
-              }
-              
-              return (
-                <TableRow key={claim.id} className="hover:bg-slate-50">
-                  {/* ID Reclamação */}
-                  <TableCell className="font-mono text-sm font-medium">
-                    {claim.resource_id || claim.resource?.id || claim.id}
-                  </TableCell>
 
-                  {/* Status */}
-                  <TableCell>
-                    <Badge className={mappedStatus.color + ' text-xs'}>
-                      {mappedStatus.icon} {mappedStatus.label}
-                    </Badge>
-                  </TableCell>
+                // Mapear tipo de problema do ML para tipos do sistema
+                const problemTypeMap: Record<string, string> = {
+                  'not_received': 'Não Recebido',
+                  'not_as_described': 'Enviado Errado',
+                  'defective': 'Quebrado',
+                  'damaged': 'Quebrado',
+                  'wrong_item': 'Enviado Errado',
+                  'missing_parts': 'Quantidade Incorreta',
+                  'manufacturing_defect': 'Defeito Fábrica',
+                  'buyer_regret': 'Arrependimento Compra',
+                  'does_not_fit': 'Compatibilidade',
+                };
 
-                  {/* Responsável */}
-                  <TableCell>
-                    <span className="text-sm text-slate-700">
-                      {claim._complementary?.responsible || claim.assigned_to || 'Não atribuído'}
-                    </span>
-                  </TableCell>
+                const reasonKey = claim.reason?.id || claim.reason || '';
+                const tipoProblemaMapeado = problemTypeMap[reasonKey] || claim.reason?.name || 'Não especificado';
 
-                  {/* Data Reclamação */}
-                  <TableCell>
-                    <div className="text-sm text-slate-600">
-                      {claim.date_created 
-                        ? format(new Date(claim.date_created), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                        : '-'}
-                    </div>
-                  </TableCell>
+                // Calcular tempo de resolução
+                let tempoResolucao = '-';
+                if (claim.date_created) {
+                  const dataAbertura = new Date(claim.date_created);
+                  const dataResolucao = claim.date_closed ? new Date(claim.date_closed) : new Date();
+                  const diffMs = dataResolucao.getTime() - dataAbertura.getTime();
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                  
+                  if (claim.status === 'closed' || claim.status === 'won') {
+                    tempoResolucao = diffDays > 0 
+                      ? `${diffDays}d ${diffHours}h ${diffMins}m` 
+                      : `${diffHours}h ${diffMins}m`;
+                  } else {
+                    tempoResolucao = 'Em andamento';
+                  }
+                }
+                
+                return (
+                  <TableRow key={claim.id} className="hover:bg-slate-50">
+                    {/* ID Reclamação */}
+                    <TableCell className="font-mono text-sm font-medium">
+                      {claim.resource_id || claim.resource?.id || claim.id}
+                    </TableCell>
 
-                  {/* Produto (SKU) */}
-                  <TableCell>
-                    <span className="text-sm text-slate-700 font-mono">
-                      {claim._complementary?.productSku || claim.item_id || '-'}
-                    </span>
-                  </TableCell>
+                    {/* Status */}
+                    <TableCell>
+                      <Badge className={mappedStatus.color + ' text-xs'}>
+                        {mappedStatus.icon} {mappedStatus.label}
+                      </Badge>
+                    </TableCell>
 
-                  {/* Tipo de Problema */}
-                  <TableCell className="max-w-xs">
-                    <span className="text-sm text-slate-700 truncate block">
-                      {tipoProblemaMapeado}
-                    </span>
-                  </TableCell>
+                    {/* Responsável */}
+                    <TableCell>
+                      <span className="text-sm text-slate-700">
+                        {claim._complementary?.responsible || claim.assigned_to || 'Não atribuído'}
+                      </span>
+                    </TableCell>
 
-                  {/* Data Resolução */}
-                  <TableCell>
-                    <div className="text-sm text-slate-600">
-                      {claim.date_closed && (claim.status === 'closed' || claim.status === 'won')
-                        ? format(new Date(claim.date_closed), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                        : '-'}
-                    </div>
-                  </TableCell>
+                    {/* Data Reclamação */}
+                    <TableCell>
+                      <div className="text-sm text-slate-600">
+                        {claim.date_created 
+                          ? format(new Date(claim.date_created), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                          : '-'}
+                      </div>
+                    </TableCell>
 
-                  {/* Custo Resolução */}
-                  <TableCell>
-                    <span className="text-sm text-slate-700 font-mono">
-                      R$ {claim._complementary?.resolutionCost 
-                        ? Number(claim._complementary.resolutionCost).toFixed(2)
-                        : (claim.resolution_amount ? Number(claim.resolution_amount).toFixed(2) : '0,00')}
-                    </span>
-                  </TableCell>
+                    {/* Produto (SKU) */}
+                    <TableCell>
+                      <span className="text-sm text-slate-700 font-mono">
+                        {claim._complementary?.productSku || claim.item_id || '-'}
+                      </span>
+                    </TableCell>
 
-                  {/* Tempo Resolução */}
-                  <TableCell>
-                    <span className="text-sm text-slate-700">
-                      {tempoResolucao}
-                    </span>
-                  </TableCell>
+                    {/* Tipo de Problema */}
+                    <TableCell className="max-w-xs">
+                      <span className="text-sm text-slate-700 truncate block">
+                        {tipoProblemaMapeado}
+                      </span>
+                    </TableCell>
 
-                  {/* Ações */}
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                      >
-                        <Link href={`/dashboard/reclamacoes/${claim.id}`}>
-                          <Eye className="h-4 w-4" />
-                          Editar
-                        </Link>
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                    {/* Data Resolução */}
+                    <TableCell>
+                      <div className="text-sm text-slate-600">
+                        {claim.date_closed && (claim.status === 'closed' || claim.status === 'won')
+                          ? format(new Date(claim.date_closed), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                          : '-'}
+                      </div>
+                    </TableCell>
+
+                    {/* Custo Resolução */}
+                    <TableCell>
+                      <span className="text-sm text-slate-700 font-mono">
+                        R$ {claim._complementary?.resolutionCost 
+                          ? Number(claim._complementary.resolutionCost).toFixed(2)
+                          : (claim.resolution_amount ? Number(claim.resolution_amount).toFixed(2) : '0,00')}
+                      </span>
+                    </TableCell>
+
+                    {/* Tempo Resolução */}
+                    <TableCell>
+                      <span className="text-sm text-slate-700">
+                        {tempoResolucao}
+                      </span>
+                    </TableCell>
+
+                    {/* Ações */}
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                        >
+                          <Link href={`/dashboard/reclamacoes/${claim.id}`}>
+                            <Eye className="h-4 w-4" />
+                            Editar
+                          </Link>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
