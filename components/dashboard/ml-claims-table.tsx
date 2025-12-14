@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -31,12 +32,23 @@ import {
   Eye,
   Loader2,
   AlertCircle,
-  Clock,
   Search,
   Filter,
   ArrowUpDown,
   ArrowDown,
   ArrowUp,
+  CheckCircle2,
+  Circle,
+  PlayCircle,
+  XCircle,
+  Package,
+  Calendar,
+  User,
+  DollarSign,
+  Clock,
+  FileText,
+  TrendingUp,
+  AlertTriangle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -202,10 +214,12 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 border border-slate-200 rounded-lg bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <span className="ml-3 text-slate-600">Carregando reclamações do Mercado Livre...</span>
-      </div>
+      <Card>
+        <CardContent className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-3" />
+          <span className="text-slate-600 font-medium">Carregando reclamações do Mercado Livre...</span>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -223,39 +237,46 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   if (error) {
     return (
       <div className="space-y-4">
-        <Alert className="border-blue-200 bg-blue-50">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>Integração Mercado Livre:</strong> {error}
-                <Link href="/dashboard/integracao" className="ml-2 underline">
-                  Conectar agora
-                </Link>
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-blue-100 p-2">
+                <AlertCircle className="h-5 w-5 text-blue-600" />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={checkStatus}
-              >
-                Ver Detalhes
-              </Button>
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-900 mb-1">Integração Mercado Livre</h3>
+                <p className="text-sm text-blue-700 mb-3">{error}</p>
+                <div className="flex gap-2">
+                  <Button size="sm" asChild>
+                    <Link href="/dashboard/integracao">
+                      Conectar Conta ML
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={checkStatus}
+                  >
+                    Ver Detalhes Técnicos
+                  </Button>
+                </div>
+              </div>
             </div>
-          </AlertDescription>
-        </Alert>
+          </CardContent>
+        </Card>
 
         {showDebug && debugInfo && (
-          <Alert className="border-slate-200 bg-slate-50">
-            <AlertCircle className="h-4 w-4 text-slate-600" />
-            <AlertDescription>
-              <div className="space-y-2">
-                <p className="font-semibold text-slate-900">Informações de Debug:</p>
-                <pre className="text-xs bg-slate-900 text-slate-100 p-3 rounded overflow-auto max-h-96">
-                  {typeof debugInfo === 'string' ? debugInfo : JSON.stringify(debugInfo, null, 2)}
-                </pre>
+          <Card className="border-slate-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-slate-600" />
+                <span className="font-semibold text-slate-900">Informações de Debug</span>
               </div>
-            </AlertDescription>
-          </Alert>
+              <pre className="text-xs bg-slate-900 text-slate-100 p-4 rounded-lg overflow-auto max-h-96 font-mono">
+                {typeof debugInfo === 'string' ? debugInfo : JSON.stringify(debugInfo, null, 2)}
+              </pre>
+            </CardContent>
+          </Card>
         )}
       </div>
     );
@@ -280,178 +301,336 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header com Badge e Contadores */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Badge className="bg-blue-100 text-blue-800">
-            Integração API ML
-          </Badge>
-          <span className="text-sm text-slate-600">
-            {filteredClaims.length} de {claims.length} reclamação(ões)
-          </span>
+    <div className="space-y-6">
+      {/* Stats Overview */}
+      {hasAnyClaims && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Total de Reclamações</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-1">{claims.length}</p>
+                </div>
+                <div className="rounded-full bg-blue-100 p-3">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Filtradas</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-1">{filteredClaims.length}</p>
+                </div>
+                <div className="rounded-full bg-green-100 p-3">
+                  <Filter className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Em Aberto</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-1">
+                    {claims.filter(c => c.status === 'opened' || c.stage === 'claim').length}
+                  </p>
+                </div>
+                <div className="rounded-full bg-orange-100 p-3">
+                  <AlertTriangle className="h-6 w-6 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      )}
 
       {/* Filtros */}
       {hasAnyClaims && (
-        <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="h-4 w-4 text-slate-600" />
-            <span className="font-medium text-slate-900">Filtros e Ordenação</span>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Busca */}
-            <div className="space-y-2">
-              <Label htmlFor="search" className="text-sm text-slate-700">
-                Buscar
-              </Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  id="search"
-                  placeholder="ID, responsável, produto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="rounded-lg bg-slate-100 p-2">
+                <Filter className="h-4 w-4 text-slate-700" />
+              </div>
+              <h3 className="font-semibold text-slate-900">Filtros e Ordenação</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              {/* Busca */}
+              <div className="lg:col-span-2 space-y-2">
+                <Label htmlFor="search" className="text-sm font-medium text-slate-700">
+                  Buscar Reclamação
+                </Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="search"
+                    placeholder="Pesquisar por ID, responsável ou produto..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-10"
+                  />
+                </div>
+              </div>
+
+              {/* Filtro de Status */}
+              <div className="space-y-2">
+                <Label htmlFor="status-filter" className="text-sm font-medium text-slate-700">
+                  Filtrar por Status
+                </Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger id="status-filter" className="h-10">
+                    <SelectValue placeholder="Todos os status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      <div className="flex items-center gap-2">
+                        <Circle className="h-3 w-3" />
+                        <span>Todos</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="opened">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-3 w-3 text-orange-600" />
+                        <span>Aberta</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="in_progress">
+                      <div className="flex items-center gap-2">
+                        <PlayCircle className="h-3 w-3 text-blue-600" />
+                        <span>Em Andamento</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="closed">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3 w-3 text-green-600" />
+                        <span>Concluída</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Ordenação */}
+              <div className="space-y-2">
+                <Label htmlFor="sort-field" className="text-sm font-medium text-slate-700">
+                  Ordenar por
+                </Label>
+                <Select 
+                  value={sortField} 
+                  onValueChange={(value) => setSortField(value as SortField)}
+                >
+                  <SelectTrigger id="sort-field" className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date_created">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3 w-3" />
+                        <span>Data de Criação</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="date_closed">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3 w-3" />
+                        <span>Data de Resolução</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="status">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-3 w-3" />
+                        <span>Status</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="responsible">
+                      <div className="flex items-center gap-2">
+                        <User className="h-3 w-3" />
+                        <span>Responsável</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* Filtro de Status */}
-            <div className="space-y-2">
-              <Label htmlFor="status-filter" className="text-sm text-slate-700">
-                Status
-              </Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger id="status-filter">
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="opened">🟡 Aberta</SelectItem>
-                  <SelectItem value="in_progress">🔵 Em Andamento</SelectItem>
-                  <SelectItem value="closed">🟢 Concluída</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Ordenação */}
-            <div className="space-y-2">
-              <Label htmlFor="sort-field" className="text-sm text-slate-700">
-                Ordenar por
-              </Label>
-              <Select 
-                value={sortField} 
-                onValueChange={(value) => setSortField(value as SortField)}
+            {/* Indicador de ordem */}
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-xs text-slate-600">Ordem:</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="h-7 text-xs"
               >
-                <SelectTrigger id="sort-field">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date_created">📅 Data de Criação</SelectItem>
-                  <SelectItem value="date_closed">✅ Data de Resolução</SelectItem>
-                  <SelectItem value="status">🔄 Status</SelectItem>
-                  <SelectItem value="responsible">👤 Responsável</SelectItem>
-                </SelectContent>
-              </Select>
+                {sortOrder === 'asc' ? (
+                  <>
+                    <ArrowUp className="h-3 w-3 mr-1" />
+                    Crescente
+                  </>
+                ) : (
+                  <>
+                    <ArrowDown className="h-3 w-3 mr-1" />
+                    Decrescente
+                  </>
+                )}
+              </Button>
             </div>
-          </div>
-
-          {/* Indicador de ordem */}
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-600">
-            <span>Ordem:</span>
-            <Badge 
-              variant="outline" 
-              className="cursor-pointer hover:bg-slate-100"
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            >
-              {sortOrder === 'asc' ? '↑ Crescente' : '↓ Decrescente'}
-            </Badge>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Mensagem quando não há claims */}
       {!hasAnyClaims && (
-        <Alert className="border-slate-200 bg-slate-50">
-          <AlertCircle className="h-4 w-4 text-slate-600" />
-          <AlertDescription className="text-slate-700">
-            Nenhuma reclamação encontrada no Mercado Livre.
-          </AlertDescription>
-        </Alert>
+        <Card className="border-slate-200">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="rounded-full bg-slate-100 p-4 mb-4">
+              <Package className="h-8 w-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">
+              Nenhuma reclamação encontrada
+            </h3>
+            <p className="text-sm text-slate-600 text-center max-w-md">
+              Quando houver reclamações no Mercado Livre, elas aparecerão aqui automaticamente.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Mensagem quando filtros não retornam resultados */}
       {hasAnyClaims && !hasFilteredClaims && (
-        <Alert className="border-orange-200 bg-orange-50">
-          <AlertCircle className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800">
-            Nenhuma reclamação encontrada com os filtros aplicados. Tente ajustar os critérios de busca.
-          </AlertDescription>
-        </Alert>
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="rounded-full bg-orange-100 p-3 mb-4">
+              <Search className="h-6 w-6 text-orange-600" />
+            </div>
+            <h3 className="text-base font-semibold text-orange-900 mb-2">
+              Nenhum resultado encontrado
+            </h3>
+            <p className="text-sm text-orange-700 text-center max-w-md mb-4">
+              Nenhuma reclamação corresponde aos filtros aplicados. Tente ajustar os critérios de busca.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('all');
+              }}
+              className="bg-white"
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Limpar Filtros
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* Tabela */}
       {hasFilteredClaims && (
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>ID Reclamação</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 hover:bg-slate-200"
-                    onClick={() => toggleSort('responsible')}
-                  >
-                    Responsável
-                    {getSortIcon('responsible')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 hover:bg-slate-200"
-                    onClick={() => toggleSort('date_created')}
-                  >
-                    Data Reclamação
-                    {getSortIcon('date_created')}
-                  </Button>
-                </TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Tipo de Problema</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 hover:bg-slate-200"
-                    onClick={() => toggleSort('date_closed')}
-                  >
-                    Data Resolução
-                    {getSortIcon('date_closed')}
-                  </Button>
-                </TableHead>
-                <TableHead>Custo Resolução</TableHead>
-                <TableHead>Tempo Resolução</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <Card>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50 hover:bg-slate-50">
+                  <TableHead className="font-semibold">ID Reclamação</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 -ml-2 hover:bg-slate-200 font-semibold"
+                      onClick={() => toggleSort('responsible')}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Responsável
+                      <span className="ml-2">{getSortIcon('responsible')}</span>
+                    </Button>
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 -ml-2 hover:bg-slate-200 font-semibold"
+                      onClick={() => toggleSort('date_created')}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Data Criação
+                      <span className="ml-2">{getSortIcon('date_created')}</span>
+                    </Button>
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Produto
+                    </div>
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Problema
+                    </div>
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 -ml-2 hover:bg-slate-200 font-semibold"
+                      onClick={() => toggleSort('date_closed')}
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Resolução
+                      <span className="ml-2">{getSortIcon('date_closed')}</span>
+                    </Button>
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      Custo
+                    </div>
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Tempo
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right font-semibold">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
               {filteredClaims.map((claim) => {
                 // Mapear status do ML para status do sistema
-                let mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
+                let mappedStatus = { 
+                  label: 'Não Iniciada', 
+                  color: 'bg-slate-100 text-slate-700',
+                  icon: <Circle className="h-3 w-3" /> 
+                };
                 
                 if (claim.stage === 'dispute' || claim.stage === 'mediation') {
-                  mappedStatus = { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
+                  mappedStatus = { 
+                    label: 'Em Andamento', 
+                    color: 'bg-blue-100 text-blue-700',
+                    icon: <PlayCircle className="h-3 w-3" />
+                  };
                 } else if (claim.status === 'closed' || claim.status === 'won') {
-                  mappedStatus = { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: '🟢' };
+                  mappedStatus = { 
+                    label: 'Concluído', 
+                    color: 'bg-green-100 text-green-700',
+                    icon: <CheckCircle2 className="h-3 w-3" />
+                  };
                 } else if (claim.stage === 'claim') {
-                  mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
+                  mappedStatus = { 
+                    label: 'Aberta', 
+                    color: 'bg-orange-100 text-orange-700',
+                    icon: <AlertCircle className="h-3 w-3" />
+                  };
                 }
 
                 // Mapear tipo de problema do ML para tipos do sistema
@@ -490,88 +669,120 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 }
                 
                 return (
-                  <TableRow key={claim.id} className="hover:bg-slate-50">
+                  <TableRow key={claim.id} className="hover:bg-slate-50 transition-colors">
                     {/* ID Reclamação */}
-                    <TableCell className="font-mono text-sm font-medium">
+                    <TableCell className="font-mono text-sm font-medium text-slate-900">
                       {claim.resource_id || claim.resource?.id || claim.id}
                     </TableCell>
 
                     {/* Status */}
                     <TableCell>
-                      <Badge className={mappedStatus.color + ' text-xs'}>
-                        {mappedStatus.icon} {mappedStatus.label}
+                      <Badge 
+                        variant="outline" 
+                        className={`${mappedStatus.color} border-0 font-medium`}
+                      >
+                        {mappedStatus.icon}
+                        <span className="ml-1.5">{mappedStatus.label}</span>
                       </Badge>
                     </TableCell>
 
                     {/* Responsável */}
                     <TableCell>
-                      <span className="text-sm text-slate-700">
-                        {claim._complementary?.responsible || claim.assigned_to || 'Não atribuído'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-full bg-slate-100 p-1.5">
+                          <User className="h-3 w-3 text-slate-600" />
+                        </div>
+                        <span className="text-sm text-slate-700 font-medium">
+                          {claim._complementary?.responsible || claim.assigned_to || (
+                            <span className="text-slate-400 italic">Não atribuído</span>
+                          )}
+                        </span>
+                      </div>
                     </TableCell>
 
                     {/* Data Reclamação */}
                     <TableCell>
-                      <div className="text-sm text-slate-600">
-                        {claim.date_created 
-                          ? format(new Date(claim.date_created), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                          : '-'}
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <div className="text-sm text-slate-600">
+                          {claim.date_created 
+                            ? format(new Date(claim.date_created), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                            : '-'}
+                        </div>
                       </div>
                     </TableCell>
 
                     {/* Produto (SKU) */}
                     <TableCell>
-                      <span className="text-sm text-slate-700 font-mono">
-                        {claim._complementary?.productSku || claim.item_id || '-'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Package className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="text-sm text-slate-700 font-mono">
+                          {claim._complementary?.productSku || claim.item_id || (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </span>
+                      </div>
                     </TableCell>
 
                     {/* Tipo de Problema */}
                     <TableCell className="max-w-xs">
-                      <span className="text-sm text-slate-700 truncate block">
-                        {tipoProblemaMapeado}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-sm text-slate-700 truncate">
+                          {tipoProblemaMapeado}
+                        </span>
+                      </div>
                     </TableCell>
 
                     {/* Data Resolução */}
                     <TableCell>
-                      <div className="text-sm text-slate-600">
-                        {claim.date_closed && (claim.status === 'closed' || claim.status === 'won')
-                          ? format(new Date(claim.date_closed), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                          : '-'}
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-slate-400" />
+                        <div className="text-sm text-slate-600">
+                          {claim.date_closed && (claim.status === 'closed' || claim.status === 'won')
+                            ? format(new Date(claim.date_closed), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                            : <span className="text-slate-400">-</span>}
+                        </div>
                       </div>
                     </TableCell>
 
                     {/* Custo Resolução */}
                     <TableCell>
-                      <span className="text-sm text-slate-700 font-mono">
-                        R$ {claim._complementary?.resolutionCost 
-                          ? Number(claim._complementary.resolutionCost).toFixed(2)
-                          : (claim.resolution_amount ? Number(claim.resolution_amount).toFixed(2) : '0,00')}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-3.5 w-3.5 text-green-600" />
+                        <span className="text-sm text-slate-700 font-medium">
+                          {claim._complementary?.resolutionCost 
+                            ? `R$ ${Number(claim._complementary.resolutionCost).toFixed(2)}`
+                            : (claim.resolution_amount 
+                              ? `R$ ${Number(claim.resolution_amount).toFixed(2)}` 
+                              : <span className="text-slate-400">R$ 0,00</span>)}
+                        </span>
+                      </div>
                     </TableCell>
 
                     {/* Tempo Resolução */}
                     <TableCell>
-                      <span className="text-sm text-slate-700">
-                        {tempoResolucao}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-blue-600" />
+                        <span className="text-sm text-slate-700 font-medium">
+                          {tempoResolucao}
+                        </span>
+                      </div>
                     </TableCell>
 
                     {/* Ações */}
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                        >
-                          <Link href={`/dashboard/reclamacoes/${claim.id}`}>
-                            <Eye className="h-4 w-4" />
-                            Editar
-                          </Link>
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="h-8"
+                      >
+                        <Link href={`/dashboard/reclamacoes/${claim.id}`}>
+                          <Eye className="h-3.5 w-3.5 mr-1.5" />
+                          Detalhes
+                        </Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -579,6 +790,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
             </TableBody>
           </Table>
         </div>
+      </Card>
       )}
     </div>
   );
