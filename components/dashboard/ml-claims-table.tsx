@@ -749,7 +749,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                       className="h-8 px-2 -ml-2 hover:bg-slate-200 font-semibold"
                       onClick={() => toggleSort('date_created')}
                     >
-                      <Calendar className="h-4 w-4 mr-2" />
+                      <CalendarIcon className="h-4 w-4 mr-2" />
                       Data Criação
                       <span className="ml-2">{getSortIcon('date_created')}</span>
                     </Button>
