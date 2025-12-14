@@ -10,6 +10,15 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -23,6 +32,11 @@ import {
   Loader2,
   AlertCircle,
   Clock,
+  Search,
+  Filter,
+  ArrowUpDown,
+  ArrowDown,
+  ArrowUp,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -31,12 +45,22 @@ interface MlClaimsTableProps {
   onClaimsLoaded?: (count: number) => void;
 }
 
+type SortField = 'date_created' | 'date_closed' | 'status' | 'responsible';
+type SortOrder = 'asc' | 'desc';
+
 export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [claims, setClaims] = useState<any[]>([]);
+  const [filteredClaims, setFilteredClaims] = useState<any[]>([]);
   const [showDebug, setShowDebug] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+
+  // Estados de filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState<SortField>('date_created');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); // Mais recente primeiro por padrão
 
   useEffect(() => {
     async function fetchClaims() {
@@ -72,12 +96,15 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
         }
 
         console.log('[ML Claims Table] Claims encontradas:', data.claims?.length || 0);
-        setClaims(data.claims || []);
-        onClaimsLoaded?.(data.claims?.length || 0);
+        const claimsData = data.claims || [];
+        setClaims(claimsData);
+        setFilteredClaims(claimsData); // Inicializar filteredClaims
+        onClaimsLoaded?.(claimsData.length);
       } catch (err) {
         console.error('[ML Claims Table] Erro ao buscar claims:', err);
         setError(err instanceof Error ? err.message : 'Erro desconhecido');
         setClaims([]);
+        setFilteredClaims([]);
         onClaimsLoaded?.(0);
       } finally {
         setLoading(false);
@@ -86,6 +113,92 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
     fetchClaims();
   }, [onClaimsLoaded]);
+
+  // Aplicar filtros e ordenação
+  useEffect(() => {
+    let result = [...claims];
+
+    // 1. Filtro de busca (ID, responsável, produto)
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter((claim) => {
+        const id = String(claim.resource_id || claim.resource?.id || claim.id).toLowerCase();
+        const responsible = (claim._complementary?.responsible || claim.assigned_to || '').toLowerCase();
+        const product = (claim._complementary?.productSku || claim.item_id || '').toLowerCase();
+        
+        return id.includes(term) || responsible.includes(term) || product.includes(term);
+      });
+    }
+
+    // 2. Filtro de status
+    if (statusFilter && statusFilter !== 'all') {
+      result = result.filter((claim) => {
+        if (statusFilter === 'opened') {
+          return claim.status === 'opened' || claim.stage === 'claim';
+        } else if (statusFilter === 'in_progress') {
+          return claim.stage === 'dispute' || claim.stage === 'mediation';
+        } else if (statusFilter === 'closed') {
+          return claim.status === 'closed' || claim.status === 'won';
+        }
+        return true;
+      });
+    }
+
+    // 3. Ordenação
+    result.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'date_created':
+          aValue = new Date(a.date_created || 0).getTime();
+          bValue = new Date(b.date_created || 0).getTime();
+          break;
+        case 'date_closed':
+          aValue = a.date_closed ? new Date(a.date_closed).getTime() : 0;
+          bValue = b.date_closed ? new Date(b.date_closed).getTime() : 0;
+          break;
+        case 'status':
+          aValue = a.status || '';
+          bValue = b.status || '';
+          break;
+        case 'responsible':
+          aValue = (a._complementary?.responsible || a.assigned_to || '').toLowerCase();
+          bValue = (b._complementary?.responsible || b.assigned_to || '').toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    setFilteredClaims(result);
+  }, [claims, searchTerm, statusFilter, sortField, sortOrder]);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Alternar ordem
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Novo campo, ordenar descendente por padrão
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 text-slate-400" />;
+    }
+    return sortOrder === 'asc' 
+      ? <ArrowUp className="h-4 w-4 text-blue-600" />
+      : <ArrowDown className="h-4 w-4 text-blue-600" />;
+  };
 
   if (loading) {
     return (
@@ -148,16 +261,8 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     );
   }
 
-  if (claims.length === 0) {
-    return (
-      <Alert className="border-slate-200 bg-slate-50">
-        <AlertCircle className="h-4 w-4 text-slate-600" />
-        <AlertDescription className="text-slate-700">
-          Nenhuma reclamação encontrada no Mercado Livre.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  const hasAnyClaims = claims.length > 0;
+  const hasFilteredClaims = filteredClaims.length > 0;
 
   // Mapeamento de status
   const stageLabels: Record<string, string> = {
@@ -176,35 +281,168 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
   return (
     <div className="space-y-4">
+      {/* Header com Badge e Contadores */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Badge className="bg-blue-100 text-blue-800">
             Integração API ML
           </Badge>
           <span className="text-sm text-slate-600">
-            {claims.length} reclamação(ões) encontrada(s)
+            {filteredClaims.length} de {claims.length} reclamação(ões)
           </span>
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead>ID Reclamação</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Responsável</TableHead>
-              <TableHead>Data Reclamação</TableHead>
-              <TableHead>Produto</TableHead>
-              <TableHead>Tipo de Problema</TableHead>
-              <TableHead>Data Resolução</TableHead>
-              <TableHead>Custo Resolução</TableHead>
-              <TableHead>Tempo Resolução</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {claims.map((claim) => {
+      {/* Filtros */}
+      {hasAnyClaims && (
+        <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-slate-600" />
+            <span className="font-medium text-slate-900">Filtros e Ordenação</span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Busca */}
+            <div className="space-y-2">
+              <Label htmlFor="search" className="text-sm text-slate-700">
+                Buscar
+              </Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  id="search"
+                  placeholder="ID, responsável, produto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
+            {/* Filtro de Status */}
+            <div className="space-y-2">
+              <Label htmlFor="status-filter" className="text-sm text-slate-700">
+                Status
+              </Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="status-filter">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="opened">🟡 Aberta</SelectItem>
+                  <SelectItem value="in_progress">🔵 Em Andamento</SelectItem>
+                  <SelectItem value="closed">🟢 Concluída</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Ordenação */}
+            <div className="space-y-2">
+              <Label htmlFor="sort-field" className="text-sm text-slate-700">
+                Ordenar por
+              </Label>
+              <Select 
+                value={sortField} 
+                onValueChange={(value) => setSortField(value as SortField)}
+              >
+                <SelectTrigger id="sort-field">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date_created">📅 Data de Criação</SelectItem>
+                  <SelectItem value="date_closed">✅ Data de Resolução</SelectItem>
+                  <SelectItem value="status">🔄 Status</SelectItem>
+                  <SelectItem value="responsible">👤 Responsável</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Indicador de ordem */}
+          <div className="mt-3 flex items-center gap-2 text-xs text-slate-600">
+            <span>Ordem:</span>
+            <Badge 
+              variant="outline" 
+              className="cursor-pointer hover:bg-slate-100"
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            >
+              {sortOrder === 'asc' ? '↑ Crescente' : '↓ Decrescente'}
+            </Badge>
+          </div>
+        </div>
+      )}
+
+      {/* Mensagem quando não há claims */}
+      {!hasAnyClaims && (
+        <Alert className="border-slate-200 bg-slate-50">
+          <AlertCircle className="h-4 w-4 text-slate-600" />
+          <AlertDescription className="text-slate-700">
+            Nenhuma reclamação encontrada no Mercado Livre.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Mensagem quando filtros não retornam resultados */}
+      {hasAnyClaims && !hasFilteredClaims && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertCircle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            Nenhuma reclamação encontrada com os filtros aplicados. Tente ajustar os critérios de busca.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Tabela */}
+      {hasFilteredClaims && (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead>ID Reclamação</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 hover:bg-slate-200"
+                    onClick={() => toggleSort('responsible')}
+                  >
+                    Responsável
+                    {getSortIcon('responsible')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 hover:bg-slate-200"
+                    onClick={() => toggleSort('date_created')}
+                  >
+                    Data Reclamação
+                    {getSortIcon('date_created')}
+                  </Button>
+                </TableHead>
+                <TableHead>Produto</TableHead>
+                <TableHead>Tipo de Problema</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 hover:bg-slate-200"
+                    onClick={() => toggleSort('date_closed')}
+                  >
+                    Data Resolução
+                    {getSortIcon('date_closed')}
+                  </Button>
+                </TableHead>
+                <TableHead>Custo Resolução</TableHead>
+                <TableHead>Tempo Resolução</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClaims.map((claim) => {
               // Mapear status do ML para status do sistema
               let mappedStatus = { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' };
               
