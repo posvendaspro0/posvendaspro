@@ -219,11 +219,14 @@ export async function getClaims(accessToken: string, filters: {
     params.append('site_id', filters.siteId);
   }
 
-  // 🎯 FILTRO: Apenas claims em aberto (status: opened)
-  // Se não especificado, buscar apenas em aberto
-  const claimStatus = filters.status || 'opened';
-  params.append('status', claimStatus);
-  console.log('[ML Service] Filtrando por status:', claimStatus);
+  // 🎯 FILTRO: Status (se especificado)
+  // Por padrão, NÃO filtrar por status para pegar abertas E concluídas
+  if (filters.status) {
+    params.append('status', filters.status);
+    console.log('[ML Service] Filtrando por status:', filters.status);
+  } else {
+    console.log('[ML Service] Sem filtro de status - buscando abertas E concluídas');
+  }
 
   // 🎯 FILTRO: Data de criação >= data de conexão da conta
   if (filters.connectedAt) {
