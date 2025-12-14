@@ -200,7 +200,7 @@ export async function getClaims(accessToken: string, filters: {
 } = {}) {
   const params = new URLSearchParams({
     offset: String(filters.offset || 0),
-    limit: String(filters.limit || 50),
+    limit: String(filters.limit || 500), // ✅ Aumentar para 500 (máx da API ML)
   });
 
   // OBRIGATÓRIO: player_role=respondent (somos o vendedor)

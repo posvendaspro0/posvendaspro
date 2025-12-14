@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     // Extrair filtros da query string
     const { searchParams } = new URL(request.url);
     const offset = parseInt(searchParams.get('offset') || '0');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = parseInt(searchParams.get('limit') || '500'); // ✅ Aumentar para 500
     const status = searchParams.get('status') || undefined;
 
     // Buscar reclamações na API do ML
