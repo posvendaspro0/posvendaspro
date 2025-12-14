@@ -1062,161 +1062,63 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
       </Card>
       )}
 
-      {/* Legendas no Final da Página */}
+      {/* Legenda no Final da Página */}
       {hasAnyClaims && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Legenda de Status */}
-          <Card className="border-slate-200">
-            <CardContent className="pt-6 pb-6">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="rounded-lg bg-blue-100 p-2">
-                  <FileText className="h-4 w-4 text-blue-600" />
+        <Card className="border-slate-200">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="rounded-lg bg-blue-100 p-2">
+                <FileText className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900">Status</h3>
+                <p className="text-xs text-slate-600 mt-0.5">Selecionar uma das opções:</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-slate-100 p-1.5 mt-0.5">
+                  <Circle className="h-3 w-3 text-slate-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Status</h3>
-                  <p className="text-xs text-slate-600 mt-0.5">Selecionar uma das opções:</p>
+                  <span className="font-medium text-slate-900">Não Iniciada</span>
+                  <span className="text-slate-600"> → Reclamação recebida, ainda sem interação.</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-slate-100 p-1.5 mt-0.5">
-                    <Circle className="h-3 w-3 text-slate-600" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-slate-900">Não Iniciada</span>
-                    <span className="text-slate-600"> → Reclamação recebida, ainda sem interação.</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-orange-100 p-1.5 mt-0.5">
-                    <AlertCircle className="h-3 w-3 text-orange-600" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-orange-900">Aberta</span>
-                    <span className="text-slate-600"> → Reclamação aguardando ação urgente.</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-blue-100 p-1.5 mt-0.5">
-                    <PlayCircle className="h-3 w-3 text-blue-600" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-blue-900">Em Andamento</span>
-                    <span className="text-slate-600"> → Já está sendo tratada.</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-green-100 p-1.5 mt-0.5">
-                    <CheckCircle2 className="h-3 w-3 text-green-600" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-green-900">Concluído</span>
-                    <span className="text-slate-600"> → Caso encerrado.</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Legenda de Tipo de Problema */}
-          <Card className="border-slate-200">
-            <CardContent className="pt-6 pb-6">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="rounded-lg bg-amber-100 p-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-orange-100 p-1.5 mt-0.5">
+                  <AlertCircle className="h-3 w-3 text-orange-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Tipo de Problema</h3>
-                  <p className="text-xs text-slate-600 mt-0.5">Classificar a reclamação:</p>
+                  <span className="font-medium text-orange-900">Aberta</span>
+                  <span className="text-slate-600"> → Reclamação aguardando ação urgente.</span>
                 </div>
               </div>
 
-              <div className="space-y-2.5 text-sm">
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Quebrado</span>
-                    <span className="text-slate-600"> - Produto chegou quebrado ou avariado;</span>
-                  </div>
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-blue-100 p-1.5 mt-0.5">
+                  <PlayCircle className="h-3 w-3 text-blue-600" />
                 </div>
-
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Enviado Errado</span>
-                    <span className="text-slate-600"> - Produto diferente do comprado;</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Quantidade Incorreta</span>
-                    <span className="text-slate-600"> - Itens a menos ou a mais;</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Enviado Mesmo Lado</span>
-                    <span className="text-slate-600"> - Dois itens do mesmo lado;</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Erro Cliente</span>
-                    <span className="text-slate-600"> - Cliente comprou errado ou se enganou;</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Lado/Cor Incorreto</span>
-                    <span className="text-slate-600"> - Comprou um lado/cor, chegou diferente;</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Defeito Fábrica</span>
-                    <span className="text-slate-600"> - Trava, suporte quebrado, risco, mancha;</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Arrependimento Compra</span>
-                    <span className="text-slate-600"> - Cliente se arrependeu da compra;</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400">•</span>
-                  <div>
-                    <span className="font-medium text-slate-900">Compatibilidade</span>
-                    <span className="text-slate-600"> - Não serviu no carro do cliente.</span>
-                  </div>
+                <div>
+                  <span className="font-medium text-blue-900">Em Andamento</span>
+                  <span className="text-slate-600"> → Já está sendo tratada.</span>
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <p className="text-xs text-slate-600 italic">
-                  <strong>Nota:</strong> Padronize o uso para gerar métricas e melhorar atendimento.
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-green-100 p-1.5 mt-0.5">
+                  <CheckCircle2 className="h-3 w-3 text-green-600" />
+                </div>
+                <div>
+                  <span className="font-medium text-green-900">Concluído</span>
+                  <span className="text-slate-600"> → Caso encerrado.</span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
