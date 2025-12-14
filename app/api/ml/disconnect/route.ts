@@ -24,21 +24,29 @@ export async function POST() {
       );
     }
 
-    // Desativa a conta ML (não deleta para manter histórico)
-    await prisma.mlAccount.updateMany({
+    const companyId = session.user.companyId;
+
+    // 1. Deletar todos os dados complementares das claims
+    await prisma.mlClaimData.deleteMany({
       where: {
-        companyId: session.user.companyId,
-        isActive: true,
-      },
-      data: {
-        isActive: false,
-        updatedAt: new Date(),
+        companyId,
       },
     });
 
+    console.log('[ML Disconnect] Dados complementares deletados');
+
+    // 2. Deletar a conta ML (limpar tudo para reconexão limpa)
+    await prisma.mlAccount.deleteMany({
+      where: {
+        companyId,
+      },
+    });
+
+    console.log('[ML Disconnect] Conta ML deletada');
+
     return NextResponse.json({
       success: true,
-      message: 'Conta do Mercado Livre desconectada com sucesso',
+      message: 'Conta do Mercado Livre desconectada com sucesso. Todos os dados foram limpos.',
     });
   } catch (error) {
     console.error('Erro ao desconectar ML:', error);
