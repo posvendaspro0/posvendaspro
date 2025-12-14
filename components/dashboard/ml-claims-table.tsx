@@ -13,6 +13,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -42,15 +48,17 @@ import {
   PlayCircle,
   XCircle,
   Package,
-  Calendar,
+  Calendar as CalendarIcon,
   User,
   DollarSign,
   Clock,
   FileText,
   TrendingUp,
   AlertTriangle,
+  CalendarDays,
+  CalendarRange,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface MlClaimsTableProps {
@@ -59,6 +67,7 @@ interface MlClaimsTableProps {
 
 type SortField = 'date_created' | 'date_closed' | 'status' | 'responsible';
 type SortOrder = 'asc' | 'desc';
+type DateFilter = 'all' | 'today' | 'yesterday' | 'last7' | 'last15' | 'last30' | 'custom';
 
 export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [loading, setLoading] = useState(true);
@@ -71,6 +80,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>(undefined);
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>(undefined);
   const [sortField, setSortField] = useState<SortField>('date_created');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); // Mais recente primeiro por padrão
 
@@ -160,7 +172,49 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
       });
     }
 
-    // 3. Ordenação
+    // 3. Filtro de data
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      let dateFrom: Date;
+      let dateTo: Date = endOfDay(now);
+
+      switch (dateFilter) {
+        case 'today':
+          dateFrom = startOfDay(now);
+          break;
+        case 'yesterday':
+          dateFrom = startOfDay(subDays(now, 1));
+          dateTo = endOfDay(subDays(now, 1));
+          break;
+        case 'last7':
+          dateFrom = startOfDay(subDays(now, 7));
+          break;
+        case 'last15':
+          dateFrom = startOfDay(subDays(now, 15));
+          break;
+        case 'last30':
+          dateFrom = startOfDay(subDays(now, 30));
+          break;
+        case 'custom':
+          if (customDateFrom && customDateTo) {
+            dateFrom = startOfDay(customDateFrom);
+            dateTo = endOfDay(customDateTo);
+          } else {
+            break;
+          }
+          break;
+        default:
+          dateFrom = new Date(0); // Todas as datas
+      }
+
+      result = result.filter((claim) => {
+        if (!claim.date_created) return false;
+        const claimDate = new Date(claim.date_created);
+        return isWithinInterval(claimDate, { start: dateFrom!, end: dateTo });
+      });
+    }
+
+    // 4. Ordenação
     result.sort((a, b) => {
       let aValue: any;
       let bValue: any;
@@ -194,7 +248,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     });
 
     setFilteredClaims(result);
-  }, [claims, searchTerm, statusFilter, sortField, sortOrder]);
+  }, [claims, searchTerm, statusFilter, dateFilter, customDateFrom, customDateTo, sortField, sortOrder]);
 
   // Calcular paginação
   const totalPages = Math.ceil(filteredClaims.length / itemsPerPage);
@@ -205,7 +259,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   // Resetar para página 1 quando filtros mudarem
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, sortField, sortOrder]);
+  }, [searchTerm, statusFilter, dateFilter, customDateFrom, customDateTo, sortField, sortOrder]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -320,24 +374,29 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     <div className="space-y-6">
       {/* Filtros */}
       {hasAnyClaims && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <div className="rounded-lg bg-slate-100 p-2">
-                  <Filter className="h-4 w-4 text-slate-700" />
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="pt-6 pb-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-2.5 shadow-sm">
+                  <Filter className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="font-semibold text-slate-900">Filtros e Ordenação</h3>
-              </div>
-              <div className="text-sm text-slate-600">
-                {filteredClaims.length} reclamação(ões) encontrada(s)
+                <div>
+                  <h3 className="font-semibold text-slate-900 text-lg">Filtros e Ordenação</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {filteredClaims.length} de {claims.length} reclamações encontradas
+                  </p>
+                </div>
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-              {/* Busca */}
-              <div className="lg:col-span-2 space-y-2">
-                <Label htmlFor="search" className="text-sm font-medium text-slate-700">
+
+            {/* Grid de Filtros */}
+            <div className="space-y-4">
+              {/* Primeira Linha: Busca */}
+              <div className="space-y-2">
+                <Label htmlFor="search" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Search className="h-3.5 w-3.5" />
                   Buscar Reclamação
                 </Label>
                 <div className="relative">
@@ -347,112 +406,262 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                     placeholder="Pesquisar por ID, responsável ou produto..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-10"
+                    className="pl-10 h-11 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Filtro de Status */}
-              <div className="space-y-2">
-                <Label htmlFor="status-filter" className="text-sm font-medium text-slate-700">
-                  Filtrar por Status
-                </Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger id="status-filter" className="h-10">
-                    <SelectValue placeholder="Todos os status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      <div className="flex items-center gap-2">
-                        <Circle className="h-3 w-3" />
-                        <span>Todos</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="opened">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-3 w-3 text-orange-600" />
-                        <span>Aberta</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="in_progress">
-                      <div className="flex items-center gap-2">
-                        <PlayCircle className="h-3 w-3 text-blue-600" />
-                        <span>Em Andamento</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="closed">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-3 w-3 text-green-600" />
-                        <span>Concluída</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Segunda Linha: Status, Data, Ordenar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Filtro de Status */}
+                <div className="space-y-2">
+                  <Label htmlFor="status-filter" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <Circle className="h-3.5 w-3.5" />
+                    Status
+                  </Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger id="status-filter" className="h-11 border-slate-300">
+                      <SelectValue placeholder="Todos os status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        <div className="flex items-center gap-2">
+                          <Circle className="h-3 w-3" />
+                          <span>Todos</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="opened">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-3 w-3 text-orange-600" />
+                          <span>Aberta</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="in_progress">
+                        <div className="flex items-center gap-2">
+                          <PlayCircle className="h-3 w-3 text-blue-600" />
+                          <span>Em Andamento</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="closed">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3 w-3 text-green-600" />
+                          <span>Concluída</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filtro de Data */}
+                <div className="space-y-2">
+                  <Label htmlFor="date-filter" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    Período
+                  </Label>
+                  <Select 
+                    value={dateFilter} 
+                    onValueChange={(value) => {
+                      setDateFilter(value as DateFilter);
+                      if (value !== 'custom') {
+                        setCustomDateFrom(undefined);
+                        setCustomDateTo(undefined);
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="date-filter" className="h-11 border-slate-300">
+                      <SelectValue placeholder="Todas as datas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="h-3 w-3" />
+                          <span>Todas as datas</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="today">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-3 w-3 text-blue-600" />
+                          <span>Hoje</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="yesterday">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-3 w-3 text-slate-600" />
+                          <span>Ontem</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="last7">
+                        <div className="flex items-center gap-2">
+                          <CalendarRange className="h-3 w-3 text-purple-600" />
+                          <span>Últimos 7 dias</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="last15">
+                        <div className="flex items-center gap-2">
+                          <CalendarRange className="h-3 w-3 text-indigo-600" />
+                          <span>Últimos 15 dias</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="last30">
+                        <div className="flex items-center gap-2">
+                          <CalendarRange className="h-3 w-3 text-violet-600" />
+                          <span>Últimos 30 dias</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="custom">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-3 w-3 text-amber-600" />
+                          <span>Período personalizado</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Ordenação */}
+                <div className="space-y-2">
+                  <Label htmlFor="sort-field" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                    Ordenar por
+                  </Label>
+                  <Select 
+                    value={sortField} 
+                    onValueChange={(value) => setSortField(value as SortField)}
+                  >
+                    <SelectTrigger id="sort-field" className="h-11 border-slate-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date_created">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-3 w-3" />
+                          <span>Data de Criação</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="date_closed">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>Data de Resolução</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="status">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-3 w-3" />
+                          <span>Status</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="responsible">
+                        <div className="flex items-center gap-2">
+                          <User className="h-3 w-3" />
+                          <span>Responsável</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {/* Ordenação */}
-              <div className="space-y-2">
-                <Label htmlFor="sort-field" className="text-sm font-medium text-slate-700">
-                  Ordenar por
-                </Label>
-                <Select 
-                  value={sortField} 
-                  onValueChange={(value) => setSortField(value as SortField)}
-                >
-                  <SelectTrigger id="sort-field" className="h-10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date_created">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-3 w-3" />
-                        <span>Data de Criação</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="date_closed">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-3 w-3" />
-                        <span>Data de Resolução</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="status">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-3 w-3" />
-                        <span>Status</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="responsible">
-                      <div className="flex items-center gap-2">
-                        <User className="h-3 w-3" />
-                        <span>Responsável</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+              {/* Calendário Personalizado (se selecionado) */}
+              {dateFilter === 'custom' && (
+                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-slate-700">Data Inicial</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`w-full h-11 justify-start text-left font-normal border-slate-300 ${
+                              !customDateFrom && 'text-slate-500'
+                            }`}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {customDateFrom ? format(customDateFrom, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={customDateFrom}
+                            onSelect={setCustomDateFrom}
+                            locale={ptBR}
+                            disabled={(date) => date > new Date()}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
 
-            {/* Indicador de ordem */}
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-xs text-slate-600">Ordem:</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="h-7 text-xs"
-              >
-                {sortOrder === 'asc' ? (
-                  <>
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                    Crescente
-                  </>
-                ) : (
-                  <>
-                    <ArrowDown className="h-3 w-3 mr-1" />
-                    Decrescente
-                  </>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-slate-700">Data Final</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`w-full h-11 justify-start text-left font-normal border-slate-300 ${
+                              !customDateTo && 'text-slate-500'
+                            }`}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {customDateTo ? format(customDateTo, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={customDateTo}
+                            onSelect={setCustomDateTo}
+                            locale={ptBR}
+                            disabled={(date) => date > new Date() || (customDateFrom ? date < customDateFrom : false)}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Terceira Linha: Ordem e Ações */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-600 font-medium">Ordem:</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="h-8 text-xs font-medium"
+                  >
+                    {sortOrder === 'asc' ? (
+                      <>
+                        <ArrowUp className="h-3 w-3 mr-1.5" />
+                        Crescente
+                      </>
+                    ) : (
+                      <>
+                        <ArrowDown className="h-3 w-3 mr-1.5" />
+                        Decrescente
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {(searchTerm || statusFilter !== 'all' || dateFilter !== 'all') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setStatusFilter('all');
+                      setDateFilter('all');
+                      setCustomDateFrom(undefined);
+                      setCustomDateTo(undefined);
+                    }}
+                    className="h-8 text-xs text-slate-600 hover:text-slate-900"
+                  >
+                    <XCircle className="h-3 w-3 mr-1.5" />
+                    Limpar Filtros
+                  </Button>
                 )}
-              </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
