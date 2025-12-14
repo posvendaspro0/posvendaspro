@@ -26,3 +26,5 @@ CREATE UNIQUE INDEX "ml_claim_data_companyId_mlClaimId_key" ON "ml_claim_data"("
 -- AddForeignKey
 ALTER TABLE "ml_claim_data" ADD CONSTRAINT "ml_claim_data_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+
+

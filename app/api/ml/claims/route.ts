@@ -65,14 +65,18 @@ export async function GET(request: Request) {
     // Buscar reclamações na API do ML
     let claims;
     try {
+      // 🎯 FILTRO: Passar connectedAt para filtrar claims antigas
       claims = await getClaims(accessToken, {
         offset,
         limit,
-        status,
+        status, // Se não informado, getClaims usa 'opened' por padrão
         userId: mlAccount.mercadoLivreUserId, // ID do usuário no ML (obrigatório)
+        connectedAt: mlAccount.connectedAt, // Data da primeira conexão
       });
       
       console.log('[ML Claims API] Reclamações encontradas:', claims.data?.length || 0);
+      console.log('[ML Claims API] Filtrado por data >= ', mlAccount.connectedAt);
+
 
       // Buscar dados complementares do banco para cada claim
       if (claims.data && claims.data.length > 0) {

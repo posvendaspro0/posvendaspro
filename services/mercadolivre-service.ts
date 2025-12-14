@@ -196,6 +196,7 @@ export async function getClaims(accessToken: string, filters: {
   status?: string;
   userId?: string; // ID do usuário no Mercado Livre (obrigatório)
   siteId?: string;
+  connectedAt?: Date; // Data da conexão da conta ML
 } = {}) {
   const params = new URLSearchParams({
     offset: String(filters.offset || 0),
@@ -218,9 +219,18 @@ export async function getClaims(accessToken: string, filters: {
     params.append('site_id', filters.siteId);
   }
 
-  // Adicionar status se fornecido
-  if (filters.status) {
-    params.append('status', filters.status);
+  // 🎯 FILTRO: Apenas claims em aberto (status: opened)
+  // Se não especificado, buscar apenas em aberto
+  const claimStatus = filters.status || 'opened';
+  params.append('status', claimStatus);
+  console.log('[ML Service] Filtrando por status:', claimStatus);
+
+  // 🎯 FILTRO: Data de criação >= data de conexão da conta
+  if (filters.connectedAt) {
+    // Formato esperado pela API: YYYY-MM-DDTHH:mm:ss.sssZ (ISO 8601)
+    const dateFrom = filters.connectedAt.toISOString();
+    params.append('date_created.from', dateFrom);
+    console.log('[ML Service] Filtrando claims criadas a partir de:', dateFrom);
   }
 
   console.log('[ML Service] Buscando claims com filtros:', params.toString());
@@ -361,6 +371,12 @@ export async function saveMlAccount(
 ) {
   const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
+  // Verificar se já existe uma conta (para não sobrescrever connectedAt)
+  const existingAccount = await prisma.mlAccount.findUnique({
+    where: { companyId },
+    select: { connectedAt: true },
+  });
+
   return prisma.mlAccount.upsert({
     where: { companyId },
     update: {
@@ -368,6 +384,7 @@ export async function saveMlAccount(
       accessToken,
       refreshToken,
       expiresAt,
+      // NÃO atualiza connectedAt em reconnects
     },
     create: {
       companyId,
@@ -375,6 +392,7 @@ export async function saveMlAccount(
       accessToken,
       refreshToken,
       expiresAt,
+      connectedAt: new Date(), // Define connectedAt apenas na primeira conexão
     },
   });
 }

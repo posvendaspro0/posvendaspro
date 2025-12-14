@@ -143,6 +143,7 @@ model MlAccount {
   accessToken         String   @db.Text // Token de acesso (criptografado recomendado)
   refreshToken        String   @db.Text // Token para renovação
   expiresAt           DateTime // Data de expiração do access token
+  connectedAt         DateTime @default(now()) // Data da primeira conexão (não muda em reconnects)
   isActive            Boolean  @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
