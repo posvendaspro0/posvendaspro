@@ -891,13 +891,13 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
                     {/* Data Reclamação */}
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                        <div className="text-sm text-slate-600">
+                      <div className="flex items-center gap-2 whitespace-nowrap">
+                        <CalendarIcon className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                        <span className="text-sm text-slate-600">
                           {claim.date_created 
                             ? format(new Date(claim.date_created), "dd/MM/yyyy HH:mm", { locale: ptBR })
                             : '-'}
-                        </div>
+                        </span>
                       </div>
                     </TableCell>
 
@@ -925,13 +925,13 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
                     {/* Data Resolução */}
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-slate-400" />
-                        <div className="text-sm text-slate-600">
+                      <div className="flex items-center gap-2 whitespace-nowrap">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                        <span className="text-sm text-slate-600">
                           {claim.date_closed && (claim.status === 'closed' || claim.status === 'won')
                             ? format(new Date(claim.date_closed), "dd/MM/yyyy HH:mm", { locale: ptBR })
                             : <span className="text-slate-400">-</span>}
-                        </div>
+                        </span>
                       </div>
                     </TableCell>
 
