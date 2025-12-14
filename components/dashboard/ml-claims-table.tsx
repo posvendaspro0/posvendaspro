@@ -83,6 +83,8 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>(undefined);
   const [customDateTo, setCustomDateTo] = useState<Date | undefined>(undefined);
+  const [dateFromOpen, setDateFromOpen] = useState(false);
+  const [dateToOpen, setDateToOpen] = useState(false);
   const [sortField, setSortField] = useState<SortField>('date_created');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); // Mais recente primeiro por padrão
 
@@ -567,7 +569,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-slate-700">Data Inicial</Label>
-                      <Popover modal={true}>
+                      <Popover open={dateFromOpen} onOpenChange={setDateFromOpen} modal={true}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -583,7 +585,10 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           <Calendar
                             mode="single"
                             selected={customDateFrom}
-                            onSelect={setCustomDateFrom}
+                            onSelect={(date) => {
+                              setCustomDateFrom(date);
+                              setDateFromOpen(false);
+                            }}
                             locale={ptBR}
                             disabled={(date) => date > new Date()}
                           />
@@ -593,7 +598,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-slate-700">Data Final</Label>
-                      <Popover modal={true}>
+                      <Popover open={dateToOpen} onOpenChange={setDateToOpen} modal={true}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -609,7 +614,10 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           <Calendar
                             mode="single"
                             selected={customDateTo}
-                            onSelect={setCustomDateTo}
+                            onSelect={(date) => {
+                              setCustomDateTo(date);
+                              setDateToOpen(false);
+                            }}
                             locale={ptBR}
                             disabled={(date) => date > new Date() || (customDateFrom ? date < customDateFrom : false)}
                           />
