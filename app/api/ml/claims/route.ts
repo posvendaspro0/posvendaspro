@@ -107,6 +107,7 @@ export async function GET(request: Request) {
             _complementary: extra ? {
               responsible: extra.responsible,
               productSku: extra.productSku,
+              problemType: extra.problemType,
               resolutionCost: extra.resolutionCost ? Number(extra.resolutionCost) : null,
               observation: extra.observation,
             } : null,

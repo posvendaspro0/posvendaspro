@@ -15,6 +15,7 @@ const mlClaimDataSchema = z.object({
   mlOrderId: z.string().optional().nullable(),
   responsible: z.string().optional().nullable(),
   productSku: z.string().optional().nullable(),
+  problemType: z.string().optional().nullable(),
   resolutionCost: z.union([z.number(), z.string()]).optional().nullable(),
   observation: z.string().optional().nullable(),
 });
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
       mlOrderId: data.mlOrderId || null,
       responsible: data.responsible || null,
       productSku: data.productSku || null,
+      problemType: data.problemType || null,
       resolutionCost: resolutionCost,
       observation: data.observation || null,
     };

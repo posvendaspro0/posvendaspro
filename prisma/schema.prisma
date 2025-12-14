@@ -163,6 +163,7 @@ model MlClaimData {
   // Campos editáveis pelo usuário
   responsible       String?  // Responsável pelo atendimento
   productSku        String?  // SKU do produto
+  problemType       String?  // Tipo do problema
   resolutionCost    Decimal? @default(0) @db.Decimal(10, 2) // Custo de resolução
   observation       String?  @db.Text // Observações sobre o caso
   

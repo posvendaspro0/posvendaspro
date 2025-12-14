@@ -7,13 +7,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 
@@ -21,6 +28,7 @@ import { Loader2, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 const mlClaimDataSchema = z.object({
   responsible: z.string().optional(),
   productSku: z.string().optional(),
+  problemType: z.string().optional(),
   resolutionCost: z.string().optional(),
   observation: z.string().optional(),
 });
@@ -44,6 +52,7 @@ export function MlClaimEditForm({ companyId, mlClaimId, mlOrderId }: MlClaimEdit
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors, isDirty },
   } = useForm<MlClaimDataInput>({
     resolver: zodResolver(mlClaimDataSchema) as any,
@@ -62,6 +71,7 @@ export function MlClaimEditForm({ companyId, mlClaimId, mlOrderId }: MlClaimEdit
           if (data.claimData) {
             setValue('responsible', data.claimData.responsible || '');
             setValue('productSku', data.claimData.productSku || '');
+            setValue('problemType', data.claimData.problemType || '');
             setValue('resolutionCost', data.claimData.resolutionCost?.toString() || '');
             setValue('observation', data.claimData.observation || '');
           }
@@ -88,6 +98,7 @@ export function MlClaimEditForm({ companyId, mlClaimId, mlOrderId }: MlClaimEdit
         mlOrderId: mlOrderId ? String(mlOrderId) : null,  // ✅ Converter para string
         responsible: data.responsible || null,
         productSku: data.productSku || null,
+        problemType: data.problemType || null,
         resolutionCost: data.resolutionCost ? parseFloat(data.resolutionCost) : null,
         observation: data.observation || null,
       };
@@ -176,6 +187,38 @@ export function MlClaimEditForm({ companyId, mlClaimId, mlOrderId }: MlClaimEdit
         />
         <p className="text-sm text-slate-500">
           Código do produto envolvido na reclamação
+        </p>
+      </div>
+
+      {/* Tipo de Problema */}
+      <div className="space-y-2">
+        <Label htmlFor="problemType">
+          Tipo de Problema
+        </Label>
+        <Controller
+          name="problemType"
+          control={control}
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo de problema" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="quebrado">Quebrado</SelectItem>
+                <SelectItem value="enviado_errado">Enviado Errado</SelectItem>
+                <SelectItem value="quantidade_incorreta">Quantidade Incorreta</SelectItem>
+                <SelectItem value="enviado_mesmo_lado">Enviado Mesmo Lado</SelectItem>
+                <SelectItem value="erro_cliente">Erro Cliente</SelectItem>
+                <SelectItem value="lado_cor_incorreto">Lado/Cor Incorreto</SelectItem>
+                <SelectItem value="defeito_fabrica">Defeito Fábrica</SelectItem>
+                <SelectItem value="arrependimento_compra">Arrependimento Compra</SelectItem>
+                <SelectItem value="compatibilidade">Compatibilidade</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+        <p className="text-sm text-slate-500">
+          Padronize para gerar métricas precisas
         </p>
       </div>
 
