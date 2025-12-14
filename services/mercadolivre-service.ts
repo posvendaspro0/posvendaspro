@@ -373,13 +373,10 @@ export async function saveMlAccount(
   expiresIn: number
 ) {
   const expiresAt = new Date(Date.now() + expiresIn * 1000);
+  const now = new Date();
 
-  // Verificar se já existe uma conta (para não sobrescrever connectedAt)
-  const existingAccount = await prisma.mlAccount.findUnique({
-    where: { companyId },
-    select: { connectedAt: true },
-  });
-
+  // ⚠️ SEMPRE atualizar connectedAt para refletir a reconexão
+  // Isso garante que apenas claims NOVAS (após esta conexão) sejam exibidas
   return prisma.mlAccount.upsert({
     where: { companyId },
     update: {
@@ -387,7 +384,7 @@ export async function saveMlAccount(
       accessToken,
       refreshToken,
       expiresAt,
-      // NÃO atualiza connectedAt em reconnects
+      connectedAt: now, // ✅ Atualiza connectedAt em TODA conexão
     },
     create: {
       companyId,
@@ -395,7 +392,7 @@ export async function saveMlAccount(
       accessToken,
       refreshToken,
       expiresAt,
-      connectedAt: new Date(), // Define connectedAt apenas na primeira conexão
+      connectedAt: now, // ✅ Define connectedAt na primeira conexão
     },
   });
 }
