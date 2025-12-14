@@ -567,7 +567,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-slate-700">Data Inicial</Label>
-                      <Popover>
+                      <Popover modal={true}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -579,7 +579,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                             {customDateFrom ? format(customDateFrom, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent className="w-auto p-0 z-[100]" align="start">
                           <Calendar
                             mode="single"
                             selected={customDateFrom}
@@ -593,7 +593,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-slate-700">Data Final</Label>
-                      <Popover>
+                      <Popover modal={true}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -605,7 +605,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                             {customDateTo ? format(customDateTo, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent className="w-auto p-0 z-[100]" align="start">
                           <Calendar
                             mode="single"
                             selected={customDateTo}
