@@ -74,6 +74,10 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [sortField, setSortField] = useState<SortField>('date_created');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); // Mais recente primeiro por padrão
 
+  // Estados de paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     async function fetchClaims() {
       try {
@@ -192,6 +196,17 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     setFilteredClaims(result);
   }, [claims, searchTerm, statusFilter, sortField, sortOrder]);
 
+  // Calcular paginação
+  const totalPages = Math.ceil(filteredClaims.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedClaims = filteredClaims.slice(startIndex, endIndex);
+
+  // Resetar para página 1 quando filtros mudarem
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortField, sortOrder]);
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       // Alternar ordem
@@ -284,6 +299,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
   const hasAnyClaims = claims.length > 0;
   const hasFilteredClaims = filteredClaims.length > 0;
+  const hasPaginatedClaims = paginatedClaims.length > 0;
 
   // Mapeamento de status
   const stageLabels: Record<string, string> = {
@@ -302,64 +318,20 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      {hasAnyClaims && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Total de Reclamações</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-1">{claims.length}</p>
-                </div>
-                <div className="rounded-full bg-blue-100 p-3">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Filtradas</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-1">{filteredClaims.length}</p>
-                </div>
-                <div className="rounded-full bg-green-100 p-3">
-                  <Filter className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Em Aberto</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-1">
-                    {claims.filter(c => c.status === 'opened' || c.stage === 'claim').length}
-                  </p>
-                </div>
-                <div className="rounded-full bg-orange-100 p-3">
-                  <AlertTriangle className="h-6 w-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Filtros */}
       {hasAnyClaims && (
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="rounded-lg bg-slate-100 p-2">
-                <Filter className="h-4 w-4 text-slate-700" />
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-slate-100 p-2">
+                  <Filter className="h-4 w-4 text-slate-700" />
+                </div>
+                <h3 className="font-semibold text-slate-900">Filtros e Ordenação</h3>
               </div>
-              <h3 className="font-semibold text-slate-900">Filtros e Ordenação</h3>
+              <div className="text-sm text-slate-600">
+                {filteredClaims.length} reclamação(ões) encontrada(s)
+              </div>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -533,7 +505,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
       )}
 
       {/* Tabela */}
-      {hasFilteredClaims && (
+      {hasPaginatedClaims && (
         <Card>
           <div className="overflow-x-auto">
             <Table>
@@ -605,7 +577,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-              {filteredClaims.map((claim) => {
+                {paginatedClaims.map((claim) => {
                 // Mapear status do ML para status do sistema
                 let mappedStatus = { 
                   label: 'Não Iniciada', 
@@ -790,6 +762,69 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
             </TableBody>
           </Table>
         </div>
+
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <CardContent className="border-t pt-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-slate-600">
+                Mostrando {startIndex + 1} a {Math.min(endIndex, filteredClaims.length)} de {filteredClaims.length} reclamações
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ArrowUp className="h-4 w-4 rotate-[-90deg]" />
+                  Anterior
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // Mostrar apenas páginas próximas
+                    if (
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="w-9"
+                        >
+                          {page}
+                        </Button>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <span key={page} className="px-2 text-slate-400">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                  <ArrowDown className="h-4 w-4 rotate-[-90deg]" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        )}
       </Card>
       )}
     </div>
