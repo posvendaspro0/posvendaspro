@@ -1,6 +1,6 @@
 /**
- * Serviço otimizado para busca de claims do Mercado Livre
- * Com suporte a paginação automática e filtros
+ * Serviço profissional para busca de claims do Mercado Livre
+ * Busca TODAS as claims sem limite e filtra por data
  */
 
 import { getClaims } from './mercadolivre-service';
@@ -10,8 +10,6 @@ interface FetchAllClaimsOptions {
   userId: string;
   connectedAt: Date;
   status?: string;
-  maxPages?: number; // Limite de segurança
-  pageSize?: number;
 }
 
 interface FetchResult {
@@ -23,115 +21,91 @@ interface FetchResult {
 }
 
 /**
- * Busca TODAS as claims com paginação automática e filtros
- * Otimizado com early exit quando encontra claims antigas demais
+ * Busca TODAS as claims da conta (sem limite)
+ * Filtra apenas claims >= connectedAt (últimos 7 dias)
  */
 export async function fetchAllClaims(
   options: FetchAllClaimsOptions
 ): Promise<FetchResult> {
   const startTime = Date.now();
-  const {
-    accessToken,
-    userId,
-    connectedAt,
-    status,
-    maxPages = 100, // Limite de segurança (100 páginas = 10.000 claims)
-    pageSize = 100,
-  } = options;
+  const { accessToken, userId, connectedAt, status } = options;
 
-  const allClaims: any[] = [];
+  const allClaimsRaw: any[] = [];
   const connectedAtTime = connectedAt.getTime();
   
   let offset = 0;
+  const pageSize = 100;
   let pagesProcessed = 0;
-  let consecutiveOldClaims = 0;
-  const MAX_CONSECUTIVE_OLD = 10; // Parar após 10 páginas consecutivas antigas
-  const MIN_PAGES_BEFORE_EXIT = 5; // Buscar no mínimo 5 páginas antes de considerar early exit
+  let hasMore = true;
 
-  console.log('[Claims Fetcher] 🚀 Iniciando busca otimizada');
+  console.log('[Claims Fetcher] 🚀 Buscando TODAS as claims');
   console.log(`[Claims Fetcher] Filtro: claims >= ${connectedAt.toISOString()}`);
 
-  while (pagesProcessed < maxPages) {
+  // Buscar TODAS as páginas sem limite
+  while (hasMore) {
     try {
       const response = await getClaims(accessToken, {
         offset,
         limit: pageSize,
         status,
         userId,
-        connectedAt, // API ML ignora, mas enviamos mesmo assim
+        connectedAt,
       });
 
       if (!response.data || response.data.length === 0) {
-        console.log(`[Claims Fetcher] ✅ Última página alcançada (vazia)`);
+        // Página vazia = última página
+        hasMore = false;
         break;
       }
 
       pagesProcessed++;
-      const pageHasValidClaims = response.data.some((claim: any) => {
-        const claimDate = new Date(claim.date_created).getTime();
-        return claimDate >= connectedAtTime;
-      });
+      allClaimsRaw.push(...response.data);
 
-      if (pageHasValidClaims) {
-        // Filtrar e adicionar apenas claims válidas desta página
-        const validClaims = response.data.filter((claim: any) => {
-          const claimDate = new Date(claim.date_created).getTime();
-          return claimDate >= connectedAtTime;
-        });
-        
-        allClaims.push(...validClaims);
-        consecutiveOldClaims = 0; // Resetar contador
-        
+      // Log a cada 10 páginas para não poluir console
+      if (pagesProcessed % 10 === 0) {
         console.log(
-          `[Claims Fetcher] Página ${pagesProcessed}: +${validClaims.length} válidas (total: ${allClaims.length})`
+          `[Claims Fetcher] Página ${pagesProcessed}: ${allClaimsRaw.length} claims acumuladas`
         );
-      } else {
-        consecutiveOldClaims++;
-        console.log(
-          `[Claims Fetcher] Página ${pagesProcessed}: 0 válidas (consecutivas antigas: ${consecutiveOldClaims})`
-        );
-        
-        // Early exit: Parar se encontrar muitas páginas consecutivas antigas
-        // MAS só após buscar um mínimo de páginas
-        if (
-          consecutiveOldClaims >= MAX_CONSECUTIVE_OLD &&
-          pagesProcessed >= MIN_PAGES_BEFORE_EXIT &&
-          allClaims.length === 0 // Só parar se não encontrou NADA ainda
-        ) {
-          console.log(
-            `[Claims Fetcher] ⚡ Early exit: ${MAX_CONSECUTIVE_OLD} páginas consecutivas sem claims válidas`
-          );
-          break;
-        }
       }
 
       // Verificar se há mais páginas
       if (!response.paging || response.paging.total <= offset + pageSize) {
-        console.log(`[Claims Fetcher] ✅ Última página alcançada (total: ${response.paging?.total || 0})`);
-        break;
+        hasMore = false;
+      } else {
+        offset += pageSize;
       }
-
-      offset += pageSize;
     } catch (error) {
       console.error(`[Claims Fetcher] ❌ Erro na página ${pagesProcessed + 1}:`, error);
       throw error;
     }
   }
 
+  console.log('[Claims Fetcher] ========================================');
+  console.log('[Claims Fetcher] 📊 BUSCA COMPLETA');
+  console.log('[Claims Fetcher] ========================================');
+  console.log(`[Claims Fetcher] Total buscado: ${allClaimsRaw.length} claims`);
+  console.log(`[Claims Fetcher] Páginas processadas: ${pagesProcessed}`);
+
+  // Filtrar apenas claims >= connectedAt
+  const filteredClaims = allClaimsRaw.filter((claim: any) => {
+    const claimDate = new Date(claim.date_created).getTime();
+    return claimDate >= connectedAtTime;
+  });
+
   const duration = Date.now() - startTime;
 
   console.log('[Claims Fetcher] ========================================');
-  console.log('[Claims Fetcher] 📊 RESUMO DA BUSCA');
+  console.log('[Claims Fetcher] 🔍 FILTRO APLICADO');
   console.log('[Claims Fetcher] ========================================');
-  console.log(`[Claims Fetcher] Páginas processadas: ${pagesProcessed}`);
-  console.log(`[Claims Fetcher] Claims válidas: ${allClaims.length}`);
+  console.log(`[Claims Fetcher] Claims filtradas: ${filteredClaims.length}`);
+  console.log(`[Claims Fetcher] Claims removidas: ${allClaimsRaw.length - filteredClaims.length}`);
   console.log(`[Claims Fetcher] Tempo total: ${(duration / 1000).toFixed(2)}s`);
   console.log('[Claims Fetcher] ========================================');
 
   return {
-    claims: allClaims,
-    totalFetched: offset + pageSize,
-    totalFiltered: allClaims.length,
+    claims: filteredClaims,
+    totalFetched: allClaimsRaw.length,
+    totalFiltered: filteredClaims.length,
     pagesProcessed,
     duration,
   };

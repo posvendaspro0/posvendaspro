@@ -78,13 +78,12 @@ export async function GET(request: Request) {
     let claims: any;
 
     try {
-      // 🚀 Buscar todas as claims com serviço otimizado
+      // 🚀 Buscar TODAS as claims (sem limite)
       const result = await fetchAllClaims({
         accessToken,
         userId: mlAccount.mercadoLivreUserId,
         connectedAt: mlAccount.connectedAt,
         status,
-        maxPages: 100, // Limite de segurança
       });
 
       // Montar resposta
