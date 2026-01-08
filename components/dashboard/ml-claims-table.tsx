@@ -69,6 +69,36 @@ type SortField = 'date_created' | 'date_closed' | 'status' | 'responsible';
 type SortOrder = 'asc' | 'desc';
 type DateFilter = 'all' | 'today' | 'yesterday' | 'last7' | 'last15' | 'last30' | 'custom';
 
+// Tradução dos tipos de claim do Mercado Livre
+const getClaimTypeLabel = (type: string): string => {
+  const types: Record<string, string> = {
+    mediations: 'Mediação',
+    return: 'Devolução',
+    fulfillment: 'Full Envios',
+    ml_case: 'Cancelamento (Comprador)',
+    cancel_sale: 'Cancelamento (Vendedor)',
+    cancel_purchase: 'Cancelamento (Comprador)',
+    change: 'Troca de Produto',
+    service: 'Cancelamento de Serviço',
+  };
+  return types[type] || type;
+};
+
+// Cor do badge por tipo
+const getClaimTypeColor = (type: string): string => {
+  const colors: Record<string, string> = {
+    mediations: 'bg-blue-100 text-blue-800 border-blue-200',
+    return: 'bg-purple-100 text-purple-800 border-purple-200',
+    fulfillment: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    ml_case: 'bg-orange-100 text-orange-800 border-orange-200',
+    cancel_sale: 'bg-red-100 text-red-800 border-red-200',
+    cancel_purchase: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    change: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    service: 'bg-pink-100 text-pink-800 border-pink-200',
+  };
+  return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
+};
+
 export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -731,6 +761,12 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <TableHead className="font-semibold">ID Reclamação</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
                   <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Tipo
+                    </div>
+                  </TableHead>
+                  <TableHead className="font-semibold">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -889,6 +925,16 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                       >
                         {mappedStatus.icon}
                         <span className="ml-1.5">{mappedStatus.label}</span>
+                      </Badge>
+                    </TableCell>
+
+                    {/* Tipo */}
+                    <TableCell>
+                      <Badge 
+                        variant="outline" 
+                        className={`${getClaimTypeColor(claim.type)} border font-medium text-xs`}
+                      >
+                        {getClaimTypeLabel(claim.type)}
                       </Badge>
                     </TableCell>
 

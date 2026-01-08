@@ -11,6 +11,51 @@ import { MlClaimEditForm } from '@/components/dashboard/ml-claim-edit-form';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+// Tradução dos tipos de claim do Mercado Livre
+const getClaimTypeLabel = (type: string): string => {
+  const types: Record<string, string> = {
+    mediations: 'Mediação',
+    return: 'Devolução',
+    fulfillment: 'Full Envios',
+    ml_case: 'Cancelamento (Comprador)',
+    cancel_sale: 'Cancelamento (Vendedor)',
+    cancel_purchase: 'Cancelamento (Comprador)',
+    change: 'Troca de Produto',
+    service: 'Cancelamento de Serviço',
+  };
+  return types[type] || type;
+};
+
+// Cor do badge por tipo
+const getClaimTypeColor = (type: string): string => {
+  const colors: Record<string, string> = {
+    mediations: 'bg-blue-100 text-blue-800 border-blue-200',
+    return: 'bg-purple-100 text-purple-800 border-purple-200',
+    fulfillment: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    ml_case: 'bg-orange-100 text-orange-800 border-orange-200',
+    cancel_sale: 'bg-red-100 text-red-800 border-red-200',
+    cancel_purchase: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    change: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    service: 'bg-pink-100 text-pink-800 border-pink-200',
+  };
+  return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
+};
+
+// Descrição detalhada do tipo
+const getClaimTypeDescription = (type: string): string => {
+  const descriptions: Record<string, string> = {
+    mediations: 'Reclamação entre comprador e vendedor',
+    return: 'Devolução do produto. Não há mensagens, para devoluções siga a documentação devoluções',
+    fulfillment: 'Reclamação entre comprador e Mercado Livre com origem de compra com envio full',
+    ml_case: 'Cancelamento da compra por parte do comprador devido a envio demorado',
+    cancel_sale: 'Cancelamento da compra por parte do vendedor',
+    cancel_purchase: 'Cancelamento da compra por parte do comprador',
+    change: 'Mudanças de produto. Indica que será realizada uma troca do produto',
+    service: 'Cancelamento de um serviço de ordens bundle',
+  };
+  return descriptions[type] || 'Tipo de reclamação não especificado';
+};
+
 /**
  * Página de Detalhes e Edição de Reclamação do ML
  */
@@ -111,6 +156,18 @@ export default async function MlClaimDetailsPage({
                 <Badge className={status.color}>
                   {status.icon} {status.label}
                 </Badge>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-sm font-medium text-slate-600">Tipo de Reclamação</span>
+              <div className="mt-1">
+                <Badge variant="outline" className={`${getClaimTypeColor(claimData.type)} border font-medium`}>
+                  {getClaimTypeLabel(claimData.type)}
+                </Badge>
+                <p className="text-xs text-slate-500 mt-1">
+                  {getClaimTypeDescription(claimData.type)}
+                </p>
               </div>
             </div>
 
