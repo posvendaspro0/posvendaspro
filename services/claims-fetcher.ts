@@ -45,7 +45,8 @@ export async function fetchAllClaims(
   let offset = 0;
   let pagesProcessed = 0;
   let consecutiveOldClaims = 0;
-  const MAX_CONSECUTIVE_OLD = 3; // Parar após 3 páginas só com claims antigas
+  const MAX_CONSECUTIVE_OLD = 10; // Parar após 10 páginas consecutivas antigas
+  const MIN_PAGES_BEFORE_EXIT = 5; // Buscar no mínimo 5 páginas antes de considerar early exit
 
   console.log('[Claims Fetcher] 🚀 Iniciando busca otimizada');
   console.log(`[Claims Fetcher] Filtro: claims >= ${connectedAt.toISOString()}`);
@@ -90,8 +91,13 @@ export async function fetchAllClaims(
           `[Claims Fetcher] Página ${pagesProcessed}: 0 válidas (consecutivas antigas: ${consecutiveOldClaims})`
         );
         
-        // Early exit: Parar se encontrar muitas páginas só com claims antigas
-        if (consecutiveOldClaims >= MAX_CONSECUTIVE_OLD) {
+        // Early exit: Parar se encontrar muitas páginas consecutivas antigas
+        // MAS só após buscar um mínimo de páginas
+        if (
+          consecutiveOldClaims >= MAX_CONSECUTIVE_OLD &&
+          pagesProcessed >= MIN_PAGES_BEFORE_EXIT &&
+          allClaims.length === 0 // Só parar se não encontrou NADA ainda
+        ) {
           console.log(
             `[Claims Fetcher] ⚡ Early exit: ${MAX_CONSECUTIVE_OLD} páginas consecutivas sem claims válidas`
           );
