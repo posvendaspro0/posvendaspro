@@ -14,7 +14,7 @@ import { ptBR } from 'date-fns/locale';
 // Tradução dos tipos de claim do Mercado Livre
 const getClaimTypeLabel = (type: string): string => {
   const types: Record<string, string> = {
-    mediations: 'Mediação',
+    mediations: 'Reclamação',
     return: 'Devolução',
     fulfillment: 'Full Envios',
     ml_case: 'Cancelamento (Comprador)',
