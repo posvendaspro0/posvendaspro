@@ -235,13 +235,15 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
       result = result.filter((claim) => {
         if (statusFilter === "opened") {
           return claim.status === "opened" || claim.stage === "claim";
-        } else if (statusFilter === "negotiation") {
+        } else if (statusFilter === "claim") {
           return claim.stage === "claim";
-        } else if (statusFilter === "mediation") {
+        } else if (statusFilter === "dispute") {
           return claim.stage === "dispute";
         } else if (statusFilter === "recontact") {
           return claim.stage === "recontact";
-        } else if (statusFilter === "ml_case") {
+        } else if (statusFilter === "none") {
+          return claim.stage === "none";
+        } else if (statusFilter === "stale") {
           return claim.stage === "stale";
         } else if (statusFilter === "closed") {
           return claim.status === "closed" || claim.status === "won";
@@ -557,16 +559,16 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           <span>Aberta</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="negotiation">
+                      <SelectItem value="claim">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="h-3 w-3 text-orange-600" />
-                          <span>Negociação</span>
+                          <span>Reclamação</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="mediation">
+                      <SelectItem value="dispute">
                         <div className="flex items-center gap-2">
                           <PlayCircle className="h-3 w-3 text-blue-600" />
-                          <span>Mediação ML</span>
+                          <span>Mediação</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="recontact">
@@ -575,7 +577,13 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           <span>Recontato</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="ml_case">
+                      <SelectItem value="none">
+                        <div className="flex items-center gap-2">
+                          <Circle className="h-3 w-3 text-slate-600" />
+                          <span>N/A</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="stale">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="h-3 w-3 text-amber-600" />
                           <span>ML Case</span>
@@ -1035,7 +1043,10 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                       color: "bg-amber-100 text-amber-700",
                       icon: <AlertCircle className="h-3 w-3" />,
                     };
-                  } else if (claim.status === "closed" || claim.status === "won") {
+                  } else if (
+                    claim.status === "closed" ||
+                    claim.status === "won"
+                  ) {
                     // Fechada com sucesso
                     mappedStatus = {
                       label: "Concluído",
@@ -1377,7 +1388,10 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 </div>
                 <div>
                   <span className="font-medium text-orange-900">Aberta</span>
-                  <span className="text-slate-600"> → Reclamação recebida, aguardando ação.</span>
+                  <span className="text-slate-600">
+                    {" "}
+                    → Reclamação recebida, aguardando ação.
+                  </span>
                 </div>
               </div>
 
@@ -1386,8 +1400,13 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <AlertCircle className="h-3 w-3 text-orange-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-orange-900">Negociação</span>
-                  <span className="text-slate-600"> → Comprador e vendedor negociando.</span>
+                  <span className="font-medium text-orange-900">
+                    Reclamação (claim)
+                  </span>
+                  <span className="text-slate-600">
+                    {" "}
+                    → Etapa onde intervém o comprador e o vendedor.
+                  </span>
                 </div>
               </div>
 
@@ -1396,8 +1415,11 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <PlayCircle className="h-3 w-3 text-blue-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-blue-900">Mediação ML</span>
-                  <span className="text-slate-600"> → Representante do Mercado Livre mediando.</span>
+                  <span className="font-medium text-blue-900">Mediação (dispute)</span>
+                  <span className="text-slate-600">
+                    {" "}
+                    → Etapa onde intervém um representante do Mercado Livre.
+                  </span>
                 </div>
               </div>
 
@@ -1406,8 +1428,24 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <AlertCircle className="h-3 w-3 text-violet-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-violet-900">Recontato</span>
-                  <span className="text-slate-600"> → Reaberta após fechamento.</span>
+                  <span className="font-medium text-violet-900">Recontato (recontact)</span>
+                  <span className="text-slate-600">
+                    {" "}
+                    → Uma parte entra em contato após o fechamento.
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-slate-100 p-1.5 mt-0.5">
+                  <Circle className="h-3 w-3 text-slate-600" />
+                </div>
+                <div>
+                  <span className="font-medium text-slate-900">N/A (none)</span>
+                  <span className="text-slate-600">
+                    {" "}
+                    → Não se aplica.
+                  </span>
                 </div>
               </div>
 
@@ -1416,8 +1454,11 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <AlertCircle className="h-3 w-3 text-amber-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-amber-900">ML Case</span>
-                  <span className="text-slate-600"> → Comprador + ML por envio demorado.</span>
+                  <span className="font-medium text-amber-900">ML Case (stale)</span>
+                  <span className="text-slate-600">
+                    {" "}
+                    → Intervém comprador e ML para reclamações do tipo ml_case.
+                  </span>
                 </div>
               </div>
 
@@ -1427,7 +1468,10 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 </div>
                 <div>
                   <span className="font-medium text-green-900">Concluído</span>
-                  <span className="text-slate-600"> → Caso encerrado com sucesso.</span>
+                  <span className="text-slate-600">
+                    {" "}
+                    → Caso encerrado com sucesso.
+                  </span>
                 </div>
               </div>
 
@@ -1437,7 +1481,10 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 </div>
                 <div>
                   <span className="font-medium text-red-900">Perdida</span>
-                  <span className="text-slate-600"> → Caso encerrado sem sucesso.</span>
+                  <span className="text-slate-600">
+                    {" "}
+                    → Caso encerrado sem sucesso.
+                  </span>
                 </div>
               </div>
             </div>
