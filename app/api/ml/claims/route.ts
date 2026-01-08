@@ -118,7 +118,7 @@ export async function GET(request: Request) {
 
         // Mesclar dados ML + dados complementares
         claims.data = claims.data.map((claim: any) => {
-          const extra = dataMap.get(String(claim.id));
+          const extra = dataMap.get(String(claim.id)) as any;
           return {
             ...claim,
             // Adicionar dados complementares
