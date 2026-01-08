@@ -1415,7 +1415,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <PlayCircle className="h-3 w-3 text-blue-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-blue-900">Mediação (dispute)</span>
+                  <span className="font-medium text-blue-900">
+                    Mediação (dispute)
+                  </span>
                   <span className="text-slate-600">
                     {" "}
                     → Etapa onde intervém um representante do Mercado Livre.
@@ -1428,7 +1430,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <AlertCircle className="h-3 w-3 text-violet-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-violet-900">Recontato (recontact)</span>
+                  <span className="font-medium text-violet-900">
+                    Recontato (recontact)
+                  </span>
                   <span className="text-slate-600">
                     {" "}
                     → Uma parte entra em contato após o fechamento.
@@ -1442,10 +1446,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 </div>
                 <div>
                   <span className="font-medium text-slate-900">N/A (none)</span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Não se aplica.
-                  </span>
+                  <span className="text-slate-600"> → Não se aplica.</span>
                 </div>
               </div>
 
@@ -1454,7 +1455,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <AlertCircle className="h-3 w-3 text-amber-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-amber-900">ML Case (stale)</span>
+                  <span className="font-medium text-amber-900">
+                    ML Case (stale)
+                  </span>
                   <span className="text-slate-600">
                     {" "}
                     → Intervém comprador e ML para reclamações do tipo ml_case.

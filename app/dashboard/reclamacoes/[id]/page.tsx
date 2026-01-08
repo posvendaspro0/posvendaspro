@@ -98,16 +98,18 @@ export default async function MlClaimDetailsPage({
     notFound();
   }
 
-  // Mapear status e stage do ML
+  // Mapear status e stage do ML (conforme documentação)
   let status = { label: 'Aberta', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
 
   // Priorizar mapeamento por STAGE
   if (claimData.stage === 'claim') {
-    status = { label: 'Negociação', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
+    status = { label: 'Reclamação', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
   } else if (claimData.stage === 'dispute') {
-    status = { label: 'Mediação ML', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
+    status = { label: 'Mediação', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
   } else if (claimData.stage === 'recontact') {
     status = { label: 'Recontato', color: 'bg-violet-100 text-violet-800', icon: '🟣' };
+  } else if (claimData.stage === 'none') {
+    status = { label: 'N/A', color: 'bg-slate-100 text-slate-800', icon: '⚪' };
   } else if (claimData.stage === 'stale') {
     status = { label: 'ML Case', color: 'bg-amber-100 text-amber-800', icon: '🟡' };
   } else if (claimData.status === 'closed' || claimData.status === 'won') {
