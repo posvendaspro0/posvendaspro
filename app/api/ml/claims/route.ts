@@ -65,10 +65,17 @@ export async function GET(request: Request) {
     // Buscar reclamações na API do ML
     let claims;
     try {
-      console.log('[ML Claims API] === DEBUG FILTROS ===');
-      console.log('[ML Claims API] connectedAt do banco:', mlAccount.connectedAt);
-      console.log('[ML Claims API] Status solicitado:', status || 'NENHUM (busca todos)');
+      console.log('[ML Claims API] ========================================');
+      console.log('[ML Claims API] 🔍 DEBUG COMPLETO - FILTROS DE DATA');
+      console.log('[ML Claims API] ========================================');
+      console.log('[ML Claims API] connectedAt (BRUTO):', mlAccount.connectedAt);
+      console.log('[ML Claims API] connectedAt (ISO):', mlAccount.connectedAt?.toISOString());
+      console.log('[ML Claims API] connectedAt (tipo):', typeof mlAccount.connectedAt);
+      console.log('[ML Claims API] Status solicitado:', status || 'TODOS');
       console.log('[ML Claims API] User ID ML:', mlAccount.mercadoLivreUserId);
+      console.log('[ML Claims API] Limit:', limit);
+      console.log('[ML Claims API] Offset:', offset);
+      console.log('[ML Claims API] ========================================');
       
       // 🎯 FILTRO: Passar connectedAt para filtrar claims antigas
       claims = await getClaims(accessToken, {
@@ -79,8 +86,24 @@ export async function GET(request: Request) {
         connectedAt: mlAccount.connectedAt, // Data da conexão
       });
       
-      console.log('[ML Claims API] Reclamações encontradas:', claims.data?.length || 0);
-      console.log('[ML Claims API] === FIM DEBUG ===');
+      console.log('[ML Claims API] ========================================');
+      console.log('[ML Claims API] 📊 RESULTADO DA BUSCA');
+      console.log('[ML Claims API] ========================================');
+      console.log('[ML Claims API] Total claims retornadas:', claims.data?.length || 0);
+      
+      if (claims.data && claims.data.length > 0) {
+        console.log('[ML Claims API] Primeira claim:');
+        console.log('[ML Claims API] - ID:', claims.data[0].id);
+        console.log('[ML Claims API] - Data criação:', claims.data[0].date_created);
+        console.log('[ML Claims API] - Status:', claims.data[0].status);
+        
+        console.log('[ML Claims API] Última claim:');
+        const last = claims.data[claims.data.length - 1];
+        console.log('[ML Claims API] - ID:', last.id);
+        console.log('[ML Claims API] - Data criação:', last.date_created);
+        console.log('[ML Claims API] - Status:', last.status);
+      }
+      console.log('[ML Claims API] ========================================');
 
 
       // Buscar dados complementares do banco para cada claim

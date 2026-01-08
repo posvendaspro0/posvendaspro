@@ -233,12 +233,24 @@ export async function getClaims(accessToken: string, filters: {
     // Formato esperado pela API: YYYY-MM-DDTHH:mm:ss.sssZ (ISO 8601)
     const dateFrom = filters.connectedAt.toISOString();
     params.append('date_created.from', dateFrom);
-    console.log('[ML Service] ✅ FILTRO DATA ATIVO - claims >= ', dateFrom);
+    console.log('[ML Service] ========================================');
+    console.log('[ML Service] ✅ FILTRO DATA ATIVO');
+    console.log('[ML Service] ========================================');
+    console.log('[ML Service] connectedAt recebido:', filters.connectedAt);
+    console.log('[ML Service] Data ISO para API ML:', dateFrom);
+    console.log('[ML Service] Filtro aplicado: date_created.from =', dateFrom);
+    console.log('[ML Service] ⚠️ API ML vai retornar APENAS claims criadas >= esta data');
+    console.log('[ML Service] ========================================');
   } else {
-    console.log('[ML Service] ⚠️ FILTRO DATA INATIVO - connectedAt não fornecido!');
+    console.log('[ML Service] ========================================');
+    console.log('[ML Service] ⚠️⚠️⚠️ ATENÇÃO: FILTRO DATA INATIVO! ⚠️⚠️⚠️');
+    console.log('[ML Service] ========================================');
+    console.log('[ML Service] connectedAt NÃO fornecido!');
+    console.log('[ML Service] API ML vai retornar TODAS as claims!');
+    console.log('[ML Service] ========================================');
   }
 
-  console.log('[ML Service] URL completa:', `/post-purchase/v1/claims/search?${params.toString()}`);
+  console.log('[ML Service] 🌐 URL final:', `/post-purchase/v1/claims/search?${params.toString()}`);
 
   return mlApiCall(`/post-purchase/v1/claims/search?${params.toString()}`, accessToken);
 }
