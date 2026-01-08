@@ -98,19 +98,25 @@ export default async function MlClaimDetailsPage({
     notFound();
   }
 
-  // Mapear status
-  const statusMap: Record<string, { label: string; color: string; icon: string }> = {
-    opened: { label: 'Não Iniciada', color: 'bg-slate-100 text-slate-600', icon: '⚪' },
-    closed: { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: '🟢' },
-    won: { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: '🟢' },
-    lost: { label: 'Concluído', color: 'bg-red-100 text-red-800', icon: '🔴' },
-  };
+  // Mapear status e stage do ML
+  let status = { label: 'Aberta', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
 
-  if (claimData.stage === 'dispute' || claimData.stage === 'mediation') {
-    statusMap[claimData.status] = { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
+  // Priorizar mapeamento por STAGE
+  if (claimData.stage === 'claim') {
+    status = { label: 'Negociação', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
+  } else if (claimData.stage === 'dispute') {
+    status = { label: 'Mediação ML', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
+  } else if (claimData.stage === 'recontact') {
+    status = { label: 'Recontato', color: 'bg-violet-100 text-violet-800', icon: '🟣' };
+  } else if (claimData.stage === 'stale') {
+    status = { label: 'ML Case', color: 'bg-amber-100 text-amber-800', icon: '🟡' };
+  } else if (claimData.status === 'closed' || claimData.status === 'won') {
+    status = { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: '🟢' };
+  } else if (claimData.status === 'lost') {
+    status = { label: 'Perdida', color: 'bg-red-100 text-red-800', icon: '🔴' };
+  } else if (claimData.status === 'opened') {
+    status = { label: 'Aberta', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
   }
-
-  const status = statusMap[claimData.status] || statusMap.opened;
 
   return (
     <div className="space-y-6">

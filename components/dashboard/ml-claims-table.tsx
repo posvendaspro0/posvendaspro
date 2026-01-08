@@ -235,10 +235,18 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
       result = result.filter((claim) => {
         if (statusFilter === "opened") {
           return claim.status === "opened" || claim.stage === "claim";
-        } else if (statusFilter === "in_progress") {
-          return claim.stage === "dispute" || claim.stage === "mediation";
+        } else if (statusFilter === "negotiation") {
+          return claim.stage === "claim";
+        } else if (statusFilter === "mediation") {
+          return claim.stage === "dispute";
+        } else if (statusFilter === "recontact") {
+          return claim.stage === "recontact";
+        } else if (statusFilter === "ml_case") {
+          return claim.stage === "stale";
         } else if (statusFilter === "closed") {
           return claim.status === "closed" || claim.status === "won";
+        } else if (statusFilter === "lost") {
+          return claim.status === "lost";
         }
         return true;
       });
@@ -549,16 +557,40 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           <span>Aberta</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="in_progress">
+                      <SelectItem value="negotiation">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-3 w-3 text-orange-600" />
+                          <span>Negociação</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="mediation">
                         <div className="flex items-center gap-2">
                           <PlayCircle className="h-3 w-3 text-blue-600" />
-                          <span>Em Andamento</span>
+                          <span>Mediação ML</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="recontact">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-3 w-3 text-violet-600" />
+                          <span>Recontato</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="ml_case">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-3 w-3 text-amber-600" />
+                          <span>ML Case</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="closed">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-3 w-3 text-green-600" />
                           <span>Concluída</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="lost">
+                        <div className="flex items-center gap-2">
+                          <XCircle className="h-3 w-3 text-red-600" />
+                          <span>Perdida</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -967,32 +999,58 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
               </TableHeader>
               <TableBody>
                 {paginatedClaims.map((claim) => {
-                  // Mapear status do ML para status do sistema
+                  // Mapear status e stage do ML para status do sistema
                   let mappedStatus = {
                     label: "Não Iniciada",
                     color: "bg-slate-100 text-slate-700",
                     icon: <Circle className="h-3 w-3" />,
                   };
 
-                  if (
-                    claim.stage === "dispute" ||
-                    claim.stage === "mediation"
-                  ) {
+                  // Priorizar mapeamento por STAGE (mais específico)
+                  if (claim.stage === "claim") {
+                    // Negociação entre comprador e vendedor
                     mappedStatus = {
-                      label: "Em Andamento",
+                      label: "Negociação",
+                      color: "bg-orange-100 text-orange-700",
+                      icon: <AlertCircle className="h-3 w-3" />,
+                    };
+                  } else if (claim.stage === "dispute") {
+                    // Mediação com representante do ML
+                    mappedStatus = {
+                      label: "Mediação ML",
                       color: "bg-blue-100 text-blue-700",
                       icon: <PlayCircle className="h-3 w-3" />,
                     };
-                  } else if (
-                    claim.status === "closed" ||
-                    claim.status === "won"
-                  ) {
+                  } else if (claim.stage === "recontact") {
+                    // Recontato após fechamento
+                    mappedStatus = {
+                      label: "Recontato",
+                      color: "bg-violet-100 text-violet-700",
+                      icon: <AlertCircle className="h-3 w-3" />,
+                    };
+                  } else if (claim.stage === "stale") {
+                    // ML Case - intervém comprador + ML
+                    mappedStatus = {
+                      label: "ML Case",
+                      color: "bg-amber-100 text-amber-700",
+                      icon: <AlertCircle className="h-3 w-3" />,
+                    };
+                  } else if (claim.status === "closed" || claim.status === "won") {
+                    // Fechada com sucesso
                     mappedStatus = {
                       label: "Concluído",
                       color: "bg-green-100 text-green-700",
                       icon: <CheckCircle2 className="h-3 w-3" />,
                     };
-                  } else if (claim.stage === "claim") {
+                  } else if (claim.status === "lost") {
+                    // Fechada - perdida
+                    mappedStatus = {
+                      label: "Perdida",
+                      color: "bg-red-100 text-red-700",
+                      icon: <XCircle className="h-3 w-3" />,
+                    };
+                  } else if (claim.status === "opened") {
+                    // Aberta
                     mappedStatus = {
                       label: "Aberta",
                       color: "bg-orange-100 text-orange-700",
@@ -1314,17 +1372,12 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="rounded-full bg-slate-100 p-1.5 mt-0.5">
-                  <Circle className="h-3 w-3 text-slate-600" />
+                <div className="rounded-full bg-orange-100 p-1.5 mt-0.5">
+                  <AlertCircle className="h-3 w-3 text-orange-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-slate-900">
-                    Não Iniciada
-                  </span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Reclamação recebida, ainda sem interação.
-                  </span>
+                  <span className="font-medium text-orange-900">Aberta</span>
+                  <span className="text-slate-600"> → Reclamação recebida, aguardando ação.</span>
                 </div>
               </div>
 
@@ -1333,11 +1386,8 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <AlertCircle className="h-3 w-3 text-orange-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-orange-900">Aberta</span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Reclamação aguardando ação urgente.
-                  </span>
+                  <span className="font-medium text-orange-900">Negociação</span>
+                  <span className="text-slate-600"> → Comprador e vendedor negociando.</span>
                 </div>
               </div>
 
@@ -1346,13 +1396,28 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <PlayCircle className="h-3 w-3 text-blue-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-blue-900">
-                    Em Andamento
-                  </span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Já está sendo tratada.
-                  </span>
+                  <span className="font-medium text-blue-900">Mediação ML</span>
+                  <span className="text-slate-600"> → Representante do Mercado Livre mediando.</span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-violet-100 p-1.5 mt-0.5">
+                  <AlertCircle className="h-3 w-3 text-violet-600" />
+                </div>
+                <div>
+                  <span className="font-medium text-violet-900">Recontato</span>
+                  <span className="text-slate-600"> → Reaberta após fechamento.</span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-amber-100 p-1.5 mt-0.5">
+                  <AlertCircle className="h-3 w-3 text-amber-600" />
+                </div>
+                <div>
+                  <span className="font-medium text-amber-900">ML Case</span>
+                  <span className="text-slate-600"> → Comprador + ML por envio demorado.</span>
                 </div>
               </div>
 
@@ -1362,7 +1427,17 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 </div>
                 <div>
                   <span className="font-medium text-green-900">Concluído</span>
-                  <span className="text-slate-600"> → Caso encerrado.</span>
+                  <span className="text-slate-600"> → Caso encerrado com sucesso.</span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-red-100 p-1.5 mt-0.5">
+                  <XCircle className="h-3 w-3 text-red-600" />
+                </div>
+                <div>
+                  <span className="font-medium text-red-900">Perdida</span>
+                  <span className="text-slate-600"> → Caso encerrado sem sucesso.</span>
                 </div>
               </div>
             </div>
