@@ -98,27 +98,50 @@ export default async function MlClaimDetailsPage({
     notFound();
   }
 
-  // Mapear status e stage do ML (conforme documentação)
+  // Mapear STATUS
   let status = { label: 'Aberta', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
-
-  // Priorizar mapeamento por STAGE
-  if (claimData.stage === 'claim') {
-    status = { label: 'Reclamação', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
-  } else if (claimData.stage === 'dispute') {
-    status = { label: 'Mediação', color: 'bg-blue-100 text-blue-800', icon: '🔵' };
-  } else if (claimData.stage === 'recontact') {
-    status = { label: 'Recontato', color: 'bg-violet-100 text-violet-800', icon: '🟣' };
-  } else if (claimData.stage === 'none') {
-    status = { label: 'N/A', color: 'bg-slate-100 text-slate-800', icon: '⚪' };
-  } else if (claimData.stage === 'stale') {
-    status = { label: 'ML Case', color: 'bg-amber-100 text-amber-800', icon: '🟡' };
-  } else if (claimData.status === 'closed' || claimData.status === 'won') {
+  
+  if (claimData.status === 'closed' || claimData.status === 'won') {
     status = { label: 'Concluído', color: 'bg-green-100 text-green-800', icon: '🟢' };
   } else if (claimData.status === 'lost') {
     status = { label: 'Perdida', color: 'bg-red-100 text-red-800', icon: '🔴' };
   } else if (claimData.status === 'opened') {
     status = { label: 'Aberta', color: 'bg-orange-100 text-orange-800', icon: '🟠' };
   }
+
+  // Mapear ETAPA (stage)
+  const getStageInfo = (stage: string) => {
+    const stages: Record<string, { label: string; description: string; color: string }> = {
+      claim: { 
+        label: 'Reclamação', 
+        description: 'Etapa onde intervém o comprador e o vendedor',
+        color: 'bg-orange-100 text-orange-800 border-orange-200'
+      },
+      dispute: { 
+        label: 'Mediação', 
+        description: 'Etapa onde intervém um representante do Mercado Livre',
+        color: 'bg-blue-100 text-blue-800 border-blue-200'
+      },
+      recontact: { 
+        label: 'Recontato', 
+        description: 'Uma parte entra em contato após o fechamento',
+        color: 'bg-violet-100 text-violet-800 border-violet-200'
+      },
+      none: { 
+        label: 'N/A', 
+        description: 'Não se aplica',
+        color: 'bg-slate-100 text-slate-800 border-slate-200'
+      },
+      stale: { 
+        label: 'ML Case', 
+        description: 'Intervém comprador e ML para reclamações ml_case',
+        color: 'bg-amber-100 text-amber-800 border-amber-200'
+      },
+    };
+    return stages[stage] || { label: stage, description: 'Etapa não mapeada', color: 'bg-gray-100 text-gray-800 border-gray-200' };
+  };
+
+  const stageInfo = getStageInfo(claimData.stage);
 
   return (
     <div className="space-y-6">
@@ -183,8 +206,15 @@ export default async function MlClaimDetailsPage({
             </div>
 
             <div>
-              <span className="text-sm font-medium text-slate-600">Etapa</span>
-              <p className="text-slate-900 mt-1">{claimData.stage}</p>
+              <span className="text-sm font-medium text-slate-600">Etapa (Stage)</span>
+              <div className="mt-1">
+                <Badge variant="outline" className={`${stageInfo.color} border font-medium`}>
+                  {stageInfo.label}
+                </Badge>
+                <p className="text-xs text-slate-500 mt-1">
+                  {stageInfo.description}
+                </p>
+              </div>
             </div>
 
             <div>

@@ -114,6 +114,29 @@ const getClaimTypeColor = (type: string): string => {
   return colors[type] || "bg-gray-100 text-gray-800 border-gray-200";
 };
 
+// Tradução e cor das etapas (stages)
+const getStageLabel = (stage: string): string => {
+  const stages: Record<string, string> = {
+    claim: "Reclamação",
+    dispute: "Mediação",
+    recontact: "Recontato",
+    none: "N/A",
+    stale: "ML Case",
+  };
+  return stages[stage] || stage;
+};
+
+const getStageColor = (stage: string): string => {
+  const colors: Record<string, string> = {
+    claim: "bg-orange-100 text-orange-800 border-orange-200",
+    dispute: "bg-blue-100 text-blue-800 border-blue-200",
+    recontact: "bg-violet-100 text-violet-800 border-violet-200",
+    none: "bg-slate-100 text-slate-800 border-slate-200",
+    stale: "bg-amber-100 text-amber-800 border-amber-200",
+  };
+  return colors[stage] || "bg-gray-100 text-gray-800 border-gray-200";
+};
+
 export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -939,6 +962,12 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                     </div>
                   </TableHead>
                   <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Etapa
+                    </div>
+                  </TableHead>
+                  <TableHead className="font-semibold">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1161,6 +1190,18 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           )} border font-medium text-xs`}
                         >
                           {getClaimTypeLabel(claim.type)}
+                        </Badge>
+                      </TableCell>
+
+                      {/* Etapa (Stage) */}
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`${getStageColor(
+                            claim.stage
+                          )} border font-medium text-xs`}
+                        >
+                          {getStageLabel(claim.stage)}
                         </Badge>
                       </TableCell>
 
