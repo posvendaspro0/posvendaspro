@@ -73,61 +73,79 @@ export async function GET(request: Request) {
 
     // Extrair filtros da query string
     const { searchParams } = new URL(request.url);
-    const offset = parseInt(searchParams.get("offset") || "0");
-    const limit = parseInt(searchParams.get("limit") || "500"); // ✅ Aumentar para 500
     const status = searchParams.get("status") || undefined;
 
-    // Buscar reclamações na API do ML
-    let claims;
+    // 🎯 BUSCAR TODAS AS CLAIMS (paginação automática)
+    let allClaims: any[] = [];
+    let offset = 0;
+    const limit = 100; // Limite por requisição (máximo seguro)
+    let hasMore = true;
+    let claims: any; // Declarar aqui para usar fora do try
+
+    console.log("[ML Claims API] ========================================");
+    console.log("[ML Claims API] 🔍 BUSCANDO TODAS AS CLAIMS");
+    console.log("[ML Claims API] ========================================");
+    console.log("[ML Claims API] connectedAt:", mlAccount.connectedAt?.toISOString());
+    console.log("[ML Claims API] Status solicitado:", status || "TODOS");
+    console.log("[ML Claims API] User ID ML:", mlAccount.mercadoLivreUserId);
+    console.log("[ML Claims API] ========================================");
+
     try {
+      // Loop para buscar todas as páginas
+      while (hasMore) {
+        console.log(`[ML Claims API] 📄 Buscando página offset=${offset}, limit=${limit}`);
+
+        const claims = await getClaims(accessToken, {
+          offset,
+          limit,
+          status,
+          userId: mlAccount.mercadoLivreUserId,
+          connectedAt: mlAccount.connectedAt,
+        });
+
+        if (claims.data && claims.data.length > 0) {
+          allClaims = allClaims.concat(claims.data);
+          console.log(`[ML Claims API] ✅ ${claims.data.length} claims nesta página`);
+          console.log(`[ML Claims API] 📊 Total acumulado: ${allClaims.length}`);
+
+          // Verificar se há mais páginas
+          if (claims.paging && claims.paging.total > allClaims.length) {
+            offset += limit;
+            hasMore = true;
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
       console.log("[ML Claims API] ========================================");
-      console.log("[ML Claims API] 🔍 DEBUG COMPLETO - FILTROS DE DATA");
+      console.log("[ML Claims API] 📊 BUSCA COMPLETA");
       console.log("[ML Claims API] ========================================");
-      console.log(
-        "[ML Claims API] connectedAt (BRUTO):",
-        mlAccount.connectedAt
-      );
-      console.log(
-        "[ML Claims API] connectedAt (ISO):",
-        mlAccount.connectedAt?.toISOString()
-      );
-      console.log(
-        "[ML Claims API] connectedAt (tipo):",
-        typeof mlAccount.connectedAt
-      );
-      console.log("[ML Claims API] Status solicitado:", status || "TODOS");
-      console.log("[ML Claims API] User ID ML:", mlAccount.mercadoLivreUserId);
-      console.log("[ML Claims API] Limit:", limit);
-      console.log("[ML Claims API] Offset:", offset);
+      console.log("[ML Claims API] Total de claims buscadas:", allClaims.length);
       console.log("[ML Claims API] ========================================");
 
-      // 🎯 FILTRO: Passar connectedAt para filtrar claims antigas
-      claims = await getClaims(accessToken, {
-        offset,
-        limit,
-        status, // Se não informado, não filtra por status
-        userId: mlAccount.mercadoLivreUserId, // ID do usuário no ML (obrigatório)
-        connectedAt: mlAccount.connectedAt, // Data da conexão
-      });
-
-      console.log("[ML Claims API] ========================================");
-      console.log("[ML Claims API] 📊 RESULTADO DA BUSCA API ML");
-      console.log("[ML Claims API] ========================================");
-      console.log(
-        "[ML Claims API] Total claims retornadas pela API:",
-        claims.data?.length || 0
-      );
+      // Criar objeto claims com todas as claims
+      claims = {
+        data: allClaims,
+        paging: {
+          total: allClaims.length,
+          offset: 0,
+          limit: allClaims.length,
+        }
+      };
 
       if (claims.data && claims.data.length > 0) {
-        console.log("[ML Claims API] Primeira claim da API:");
+        console.log("[ML Claims API] Primeira claim:");
         console.log("[ML Claims API] - ID:", claims.data[0].id);
-        console.log(
-          "[ML Claims API] - Data criação:",
-          claims.data[0].date_created
-        );
-        console.log("[ML Claims API] - Status:", claims.data[0].status);
+        console.log("[ML Claims API] - Data:", claims.data[0].date_created);
+        
+        console.log("[ML Claims API] Última claim:");
+        const last = claims.data[claims.data.length - 1];
+        console.log("[ML Claims API] - ID:", last.id);
+        console.log("[ML Claims API] - Data:", last.date_created);
       }
-      console.log("[ML Claims API] ========================================");
 
       // 🎯 FILTRO MANUAL: API ML ignora date_created.from
       // Filtrar claims criadas >= connectedAt no BACKEND
@@ -143,10 +161,19 @@ export async function GET(request: Request) {
         console.log("[ML Claims API] ========================================");
         console.log("[ML Claims API] 🔍 FILTRO MANUAL APLICADO");
         console.log("[ML Claims API] ========================================");
-        console.log("[ML Claims API] connectedAt:", mlAccount.connectedAt.toISOString());
-        console.log("[ML Claims API] Claims antes do filtro:", totalAntesFiltro);
+        console.log(
+          "[ML Claims API] connectedAt:",
+          mlAccount.connectedAt.toISOString()
+        );
+        console.log(
+          "[ML Claims API] Claims antes do filtro:",
+          totalAntesFiltro
+        );
         console.log("[ML Claims API] Claims após filtro:", claims.data.length);
-        console.log("[ML Claims API] Claims removidas:", totalAntesFiltro - claims.data.length);
+        console.log(
+          "[ML Claims API] Claims removidas:",
+          totalAntesFiltro - claims.data.length
+        );
         console.log("[ML Claims API] ========================================");
 
         if (claims.data.length > 0) {
