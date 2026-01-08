@@ -86,8 +86,19 @@ export async function fetchAllClaims(
   console.log(`[Claims Fetcher] Total buscado: ${allClaimsRaw.length} claims`);
   console.log(`[Claims Fetcher] Páginas processadas: ${pagesProcessed}`);
 
+  // Remover duplicatas (por ID)
+  const uniqueClaims = Array.from(
+    new Map(allClaimsRaw.map((claim: any) => [claim.id, claim])).values()
+  );
+
+  if (uniqueClaims.length < allClaimsRaw.length) {
+    console.log(
+      `[Claims Fetcher] ⚠️ Duplicatas removidas: ${allClaimsRaw.length - uniqueClaims.length}`
+    );
+  }
+
   // Filtrar apenas claims >= connectedAt
-  const filteredClaims = allClaimsRaw.filter((claim: any) => {
+  const filteredClaims = uniqueClaims.filter((claim: any) => {
     const claimDate = new Date(claim.date_created).getTime();
     return claimDate >= connectedAtTime;
   });
