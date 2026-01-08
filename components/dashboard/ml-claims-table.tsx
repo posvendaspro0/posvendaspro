@@ -87,6 +87,7 @@ const getClaimTypeLabel = (type: string): string => {
   const types: Record<string, string> = {
     mediations: "Reclamação",
     return: "Devolução",
+    returns: "Devolução", // API ML usa "returns" (plural)
     fulfillment: "Full Envios",
     ml_case: "Cancelamento (Comprador)",
     cancel_sale: "Cancelamento (Vendedor)",
@@ -102,6 +103,7 @@ const getClaimTypeColor = (type: string): string => {
   const colors: Record<string, string> = {
     mediations: "bg-blue-100 text-blue-800 border-blue-200",
     return: "bg-purple-100 text-purple-800 border-purple-200",
+    returns: "bg-purple-100 text-purple-800 border-purple-200", // API ML usa "returns" (plural)
     fulfillment: "bg-cyan-100 text-cyan-800 border-cyan-200",
     ml_case: "bg-orange-100 text-orange-800 border-orange-200",
     cancel_sale: "bg-red-100 text-red-800 border-red-200",
