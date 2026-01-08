@@ -451,18 +451,24 @@ export async function saveMlAccount(
   expiresIn: number
 ) {
   const expiresAt = new Date(Date.now() + expiresIn * 1000);
-  
+
   // 🎯 connectedAt = 7 dias atrás (buscar claims dos últimos 7 dias)
   // Isso evita problemas com data do sistema e garante margem de segurança
-  const sevenDaysAgo = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000));
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  console.log('[saveMlAccount] ========================================');
-  console.log('[saveMlAccount] 📅 Definindo connectedAt');
-  console.log('[saveMlAccount] ========================================');
-  console.log('[saveMlAccount] Data atual do sistema:', new Date().toISOString());
-  console.log('[saveMlAccount] connectedAt (7 dias atrás):', sevenDaysAgo.toISOString());
-  console.log('[saveMlAccount] ✅ Buscará claims dos últimos 7 dias');
-  console.log('[saveMlAccount] ========================================');
+  console.log("[saveMlAccount] ========================================");
+  console.log("[saveMlAccount] 📅 Definindo connectedAt");
+  console.log("[saveMlAccount] ========================================");
+  console.log(
+    "[saveMlAccount] Data atual do sistema:",
+    new Date().toISOString()
+  );
+  console.log(
+    "[saveMlAccount] connectedAt (7 dias atrás):",
+    sevenDaysAgo.toISOString()
+  );
+  console.log("[saveMlAccount] ✅ Buscará claims dos últimos 7 dias");
+  console.log("[saveMlAccount] ========================================");
 
   return prisma.mlAccount.upsert({
     where: { companyId },
