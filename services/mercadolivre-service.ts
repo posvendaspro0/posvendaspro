@@ -3,10 +3,12 @@
  * Gerencia autenticação OAuth2 e chamadas à API
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from "@/lib/prisma";
 
-const ML_API_URL = process.env.MERCADOLIVRE_API_URL || 'https://api.mercadolibre.com';
-const ML_AUTH_URL = process.env.MERCADOLIVRE_AUTH_URL || 'https://auth.mercadolivre.com.br';
+const ML_API_URL =
+  process.env.MERCADOLIVRE_API_URL || "https://api.mercadolibre.com";
+const ML_AUTH_URL =
+  process.env.MERCADOLIVRE_AUTH_URL || "https://auth.mercadolivre.com.br";
 const CLIENT_ID = process.env.MERCADOLIVRE_CLIENT_ID!;
 const CLIENT_SECRET = process.env.MERCADOLIVRE_CLIENT_SECRET!;
 const REDIRECT_URI = process.env.MERCADOLIVRE_REDIRECT_URI!;
@@ -16,7 +18,7 @@ const REDIRECT_URI = process.env.MERCADOLIVRE_REDIRECT_URI!;
  */
 export function getAuthorizationUrl(companyId: string): string {
   const params = new URLSearchParams({
-    response_type: 'code',
+    response_type: "code",
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     state: companyId, // Passa o ID da empresa no state
@@ -30,13 +32,13 @@ export function getAuthorizationUrl(companyId: string): string {
  */
 export async function exchangeCodeForTokens(code: string) {
   const response = await fetch(`${ML_API_URL}/oauth/token`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json',
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
     },
     body: new URLSearchParams({
-      grant_type: 'authorization_code',
+      grant_type: "authorization_code",
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       code,
@@ -50,7 +52,7 @@ export async function exchangeCodeForTokens(code: string) {
   }
 
   const data = await response.json();
-  
+
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token,
@@ -64,13 +66,13 @@ export async function exchangeCodeForTokens(code: string) {
  */
 export async function refreshAccessToken(refreshToken: string) {
   const response = await fetch(`${ML_API_URL}/oauth/token`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json',
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
     },
     body: new URLSearchParams({
-      grant_type: 'refresh_token',
+      grant_type: "refresh_token",
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       refresh_token: refreshToken,
@@ -78,11 +80,11 @@ export async function refreshAccessToken(refreshToken: string) {
   });
 
   if (!response.ok) {
-    throw new Error('Erro ao renovar token');
+    throw new Error("Erro ao renovar token");
   }
 
   const data = await response.json();
-  
+
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token,
@@ -93,62 +95,68 @@ export async function refreshAccessToken(refreshToken: string) {
 /**
  * Faz chamada autenticada à API do ML
  */
-async function mlApiCall(endpoint: string, accessToken: string, options: RequestInit = {}) {
+async function mlApiCall(
+  endpoint: string,
+  accessToken: string,
+  options: RequestInit = {}
+) {
   const fullUrl = `${ML_API_URL}${endpoint}`;
-  
-  console.log('[ML API Call] Iniciando chamada:', {
+
+  console.log("[ML API Call] Iniciando chamada:", {
     url: fullUrl,
-    method: options.method || 'GET',
+    method: options.method || "GET",
     hasToken: !!accessToken,
-    tokenPrefix: accessToken ? accessToken.substring(0, 20) + '...' : 'N/A'
+    tokenPrefix: accessToken ? accessToken.substring(0, 20) + "..." : "N/A",
   });
 
   try {
     const response = await fetch(fullUrl, {
       ...options,
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
         ...options.headers,
       },
     });
 
-    console.log('[ML API Call] Resposta recebida:', {
+    console.log("[ML API Call] Resposta recebida:", {
       status: response.status,
       statusText: response.statusText,
-      ok: response.ok
+      ok: response.ok,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       let errorDetails;
-      
+
       try {
         errorDetails = JSON.parse(errorText);
       } catch {
         errorDetails = errorText;
       }
 
-      console.error('[ML API Call] Erro na resposta:', {
+      console.error("[ML API Call] Erro na resposta:", {
         status: response.status,
         statusText: response.statusText,
-        errorDetails
+        errorDetails,
       });
 
-      throw new Error(`API ML retornou ${response.status}: ${JSON.stringify(errorDetails)}`);
+      throw new Error(
+        `API ML retornou ${response.status}: ${JSON.stringify(errorDetails)}`
+      );
     }
 
     const data = await response.json();
-    console.log('[ML API Call] Dados recebidos com sucesso:', {
+    console.log("[ML API Call] Dados recebidos com sucesso:", {
       hasData: !!data,
-      dataKeys: data ? Object.keys(data) : []
+      dataKeys: data ? Object.keys(data) : [],
     });
 
     return data;
   } catch (error) {
-    console.error('[ML API Call] Erro na chamada:', {
+    console.error("[ML API Call] Erro na chamada:", {
       error: error instanceof Error ? error.message : String(error),
-      endpoint: fullUrl
+      endpoint: fullUrl,
     });
     throw error;
   }
@@ -164,16 +172,20 @@ export async function getUserInfo(accessToken: string, userId: string) {
 /**
  * Lista pedidos do vendedor
  */
-export async function getOrders(accessToken: string, userId: string, filters: {
-  offset?: number;
-  limit?: number;
-  sort?: 'date_asc' | 'date_desc';
-} = {}) {
+export async function getOrders(
+  accessToken: string,
+  userId: string,
+  filters: {
+    offset?: number;
+    limit?: number;
+    sort?: "date_asc" | "date_desc";
+  } = {}
+) {
   const params = new URLSearchParams({
     seller: userId,
     offset: String(filters.offset || 0),
     limit: String(filters.limit || 50),
-    sort: filters.sort || 'date_desc',
+    sort: filters.sort || "date_desc",
   });
 
   return mlApiCall(`/orders/search?${params.toString()}`, accessToken);
@@ -190,69 +202,84 @@ export async function getOrder(accessToken: string, orderId: string) {
  * Lista reclamações (claims) do vendedor
  * IMPORTANTE: A API ML exige player_role AND player_user_id
  */
-export async function getClaims(accessToken: string, filters: {
-  offset?: number;
-  limit?: number;
-  status?: string;
-  userId?: string; // ID do usuário no Mercado Livre (obrigatório)
-  siteId?: string;
-  connectedAt?: Date; // Data da conexão da conta ML
-} = {}) {
+export async function getClaims(
+  accessToken: string,
+  filters: {
+    offset?: number;
+    limit?: number;
+    status?: string;
+    userId?: string; // ID do usuário no Mercado Livre (obrigatório)
+    siteId?: string;
+    connectedAt?: Date; // Data da conexão da conta ML
+  } = {}
+) {
   const params = new URLSearchParams({
     offset: String(filters.offset || 0),
     limit: String(filters.limit || 500), // ✅ Aumentar para 500 (máx da API ML)
   });
 
   // OBRIGATÓRIO: player_role=respondent (somos o vendedor)
-  params.append('player_role', 'respondent');
-  
+  params.append("player_role", "respondent");
+
   // OBRIGATÓRIO: player_user_id (ID do usuário no ML)
   if (filters.userId) {
-    params.append('player_user_id', filters.userId);
-    console.log('[ML Service] Usando player_user_id:', filters.userId);
+    params.append("player_user_id", filters.userId);
+    console.log("[ML Service] Usando player_user_id:", filters.userId);
   } else {
-    console.warn('[ML Service] AVISO: player_user_id não fornecido! A API pode rejeitar a requisição.');
+    console.warn(
+      "[ML Service] AVISO: player_user_id não fornecido! A API pode rejeitar a requisição."
+    );
   }
 
   // Adicionar site_id se fornecido (MLB = Brasil)
   if (filters.siteId) {
-    params.append('site_id', filters.siteId);
+    params.append("site_id", filters.siteId);
   }
 
   // 🎯 FILTRO: Status (se especificado)
   // Por padrão, NÃO filtrar por status para pegar abertas E concluídas
   if (filters.status) {
-    params.append('status', filters.status);
-    console.log('[ML Service] Filtrando por status:', filters.status);
+    params.append("status", filters.status);
+    console.log("[ML Service] Filtrando por status:", filters.status);
   } else {
-    console.log('[ML Service] Sem filtro de status - buscando abertas E concluídas');
+    console.log(
+      "[ML Service] Sem filtro de status - buscando abertas E concluídas"
+    );
   }
 
   // 🎯 FILTRO: Data de criação >= data de conexão da conta
   if (filters.connectedAt) {
     // Formato esperado pela API: YYYY-MM-DDTHH:mm:ss.sssZ (ISO 8601)
     const dateFrom = filters.connectedAt.toISOString();
-    params.append('date_created.from', dateFrom);
-    console.log('[ML Service] ========================================');
-    console.log('[ML Service] ✅ FILTRO DATA ATIVO');
-    console.log('[ML Service] ========================================');
-    console.log('[ML Service] connectedAt recebido:', filters.connectedAt);
-    console.log('[ML Service] Data ISO para API ML:', dateFrom);
-    console.log('[ML Service] Filtro aplicado: date_created.from =', dateFrom);
-    console.log('[ML Service] ⚠️ API ML vai retornar APENAS claims criadas >= esta data');
-    console.log('[ML Service] ========================================');
+    params.append("date_created.from", dateFrom);
+    console.log("[ML Service] ========================================");
+    console.log("[ML Service] ✅ FILTRO DATA ATIVO");
+    console.log("[ML Service] ========================================");
+    console.log("[ML Service] connectedAt recebido:", filters.connectedAt);
+    console.log("[ML Service] Data ISO para API ML:", dateFrom);
+    console.log("[ML Service] Filtro aplicado: date_created.from =", dateFrom);
+    console.log(
+      "[ML Service] ⚠️ API ML vai retornar APENAS claims criadas >= esta data"
+    );
+    console.log("[ML Service] ========================================");
   } else {
-    console.log('[ML Service] ========================================');
-    console.log('[ML Service] ⚠️⚠️⚠️ ATENÇÃO: FILTRO DATA INATIVO! ⚠️⚠️⚠️');
-    console.log('[ML Service] ========================================');
-    console.log('[ML Service] connectedAt NÃO fornecido!');
-    console.log('[ML Service] API ML vai retornar TODAS as claims!');
-    console.log('[ML Service] ========================================');
+    console.log("[ML Service] ========================================");
+    console.log("[ML Service] ⚠️⚠️⚠️ ATENÇÃO: FILTRO DATA INATIVO! ⚠️⚠️⚠️");
+    console.log("[ML Service] ========================================");
+    console.log("[ML Service] connectedAt NÃO fornecido!");
+    console.log("[ML Service] API ML vai retornar TODAS as claims!");
+    console.log("[ML Service] ========================================");
   }
 
-  console.log('[ML Service] 🌐 URL final:', `/post-purchase/v1/claims/search?${params.toString()}`);
+  console.log(
+    "[ML Service] 🌐 URL final:",
+    `/post-purchase/v1/claims/search?${params.toString()}`
+  );
 
-  return mlApiCall(`/post-purchase/v1/claims/search?${params.toString()}`, accessToken);
+  return mlApiCall(
+    `/post-purchase/v1/claims/search?${params.toString()}`,
+    accessToken
+  );
 }
 
 /**
@@ -279,11 +306,15 @@ export async function getMessages(accessToken: string, orderId: string) {
 /**
  * Envia mensagem para o comprador
  */
-export async function sendMessage(accessToken: string, orderId: string, message: string) {
+export async function sendMessage(
+  accessToken: string,
+  orderId: string,
+  message: string
+) {
   return mlApiCall(`/messages/orders/${orderId}`, accessToken, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       text: message,
@@ -294,16 +325,24 @@ export async function sendMessage(accessToken: string, orderId: string, message:
 /**
  * Responde uma reclamação
  */
-export async function respondClaim(accessToken: string, claimId: string, message: string) {
-  return mlApiCall(`/post-purchase/v1/claims/${claimId}/messages`, accessToken, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      text: message,
-    }),
-  });
+export async function respondClaim(
+  accessToken: string,
+  claimId: string,
+  message: string
+) {
+  return mlApiCall(
+    `/post-purchase/v1/claims/${claimId}/messages`,
+    accessToken,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: message,
+      }),
+    }
+  );
 }
 
 /**
@@ -311,18 +350,22 @@ export async function respondClaim(accessToken: string, claimId: string, message
  */
 export async function acceptClaim(accessToken: string, claimId: string) {
   return mlApiCall(`/post-purchase/v1/claims/${claimId}/accept`, accessToken, {
-    method: 'POST',
+    method: "POST",
   });
 }
 
 /**
  * Recusa uma reclamação
  */
-export async function declineClaim(accessToken: string, claimId: string, reason: string) {
+export async function declineClaim(
+  accessToken: string,
+  claimId: string,
+  reason: string
+) {
   return mlApiCall(`/post-purchase/v1/claims/${claimId}/decline`, accessToken, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       reason,
@@ -340,29 +383,50 @@ export async function getClaimMessages(accessToken: string, claimId: string) {
 /**
  * Busca histórico de ações de uma reclamação
  */
-export async function getClaimActionsHistory(accessToken: string, claimId: string) {
-  return mlApiCall(`/post-purchase/v1/claims/${claimId}/actions-history`, accessToken);
+export async function getClaimActionsHistory(
+  accessToken: string,
+  claimId: string
+) {
+  return mlApiCall(
+    `/post-purchase/v1/claims/${claimId}/actions-history`,
+    accessToken
+  );
 }
 
 /**
  * Busca histórico de status de uma reclamação
  */
-export async function getClaimStatusHistory(accessToken: string, claimId: string) {
-  return mlApiCall(`/post-purchase/v1/claims/${claimId}/status-history`, accessToken);
+export async function getClaimStatusHistory(
+  accessToken: string,
+  claimId: string
+) {
+  return mlApiCall(
+    `/post-purchase/v1/claims/${claimId}/status-history`,
+    accessToken
+  );
 }
 
 /**
  * Verifica se uma reclamação afeta a reputação
  */
-export async function getClaimAffectsReputation(accessToken: string, claimId: string) {
-  return mlApiCall(`/post-purchase/v1/claims/${claimId}/affects-reputation`, accessToken);
+export async function getClaimAffectsReputation(
+  accessToken: string,
+  claimId: string
+) {
+  return mlApiCall(
+    `/post-purchase/v1/claims/${claimId}/affects-reputation`,
+    accessToken
+  );
 }
 
 /**
  * Busca motivos disponíveis para reclamações
  */
 export async function getClaimReasons(accessToken: string, siteId: string) {
-  return mlApiCall(`/post-purchase/v1/claims/reasons?site_id=${siteId}`, accessToken);
+  return mlApiCall(
+    `/post-purchase/v1/claims/reasons?site_id=${siteId}`,
+    accessToken
+  );
 }
 
 /**
@@ -432,20 +496,25 @@ export async function disconnectMlAccount(companyId: string) {
 /**
  * Verifica se o token está expirado e renova se necessário
  */
-export async function getValidAccessToken(companyId: string): Promise<string | null> {
-  console.log('[ML Service] Buscando conta ML para empresa:', companyId);
-  
+export async function getValidAccessToken(
+  companyId: string
+): Promise<string | null> {
+  console.log("[ML Service] Buscando conta ML para empresa:", companyId);
+
   const mlAccount = await getMlAccountByCompanyId(companyId);
-  
+
   if (!mlAccount) {
-    console.log('[ML Service] Nenhuma conta ML encontrada para empresa:', companyId);
+    console.log(
+      "[ML Service] Nenhuma conta ML encontrada para empresa:",
+      companyId
+    );
     return null;
   }
 
-  console.log('[ML Service] Conta ML encontrada:', {
+  console.log("[ML Service] Conta ML encontrada:", {
     userId: mlAccount.mercadoLivreUserId,
     expiresAt: mlAccount.expiresAt,
-    isActive: mlAccount.isActive
+    isActive: mlAccount.isActive,
   });
 
   // Se o token ainda é válido (com margem de 5 minutos)
@@ -455,18 +524,24 @@ export async function getValidAccessToken(companyId: string): Promise<string | n
   const timeUntilExpiry = expiresAt.getTime() - now.getTime();
 
   if (timeUntilExpiry > marginMs) {
-    console.log('[ML Service] Token ainda válido. Expira em:', Math.floor(timeUntilExpiry / 1000 / 60), 'minutos');
+    console.log(
+      "[ML Service] Token ainda válido. Expira em:",
+      Math.floor(timeUntilExpiry / 1000 / 60),
+      "minutos"
+    );
     return mlAccount.accessToken;
   }
 
-  console.log('[ML Service] Token expirado ou próximo de expirar. Renovando...');
+  console.log(
+    "[ML Service] Token expirado ou próximo de expirar. Renovando..."
+  );
 
   // Token expirado ou próximo de expirar, renovar
   try {
     const tokens = await refreshAccessToken(mlAccount.refreshToken);
-    
-    console.log('[ML Service] Token renovado com sucesso');
-    
+
+    console.log("[ML Service] Token renovado com sucesso");
+
     // Atualizar no banco
     await saveMlAccount(
       companyId,
@@ -478,13 +553,12 @@ export async function getValidAccessToken(companyId: string): Promise<string | n
 
     return tokens.accessToken;
   } catch (error) {
-    console.error('[ML Service] Erro ao renovar token:', error);
-    console.error('[ML Service] Detalhes do erro:', {
+    console.error("[ML Service] Erro ao renovar token:", error);
+    console.error("[ML Service] Detalhes do erro:", {
       message: error instanceof Error ? error.message : String(error),
       companyId,
-      userId: mlAccount.mercadoLivreUserId
+      userId: mlAccount.mercadoLivreUserId,
     });
     return null;
   }
 }
-

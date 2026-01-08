@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { exchangeCodeForTokens } from '@/services/mercadolivre-service';
+import { exchangeCodeForTokens, saveMlAccount } from '@/services/mercadolivre-service';
 
 /**
  * GET /api/ml/callback
@@ -18,43 +17,32 @@ export async function GET(request: Request) {
       );
     }
 
+    console.log('[ML Callback] ========================================');
+    console.log('[ML Callback] 🔗 CONECTANDO CONTA MERCADO LIVRE');
+    console.log('[ML Callback] ========================================');
+    console.log('[ML Callback] Company ID:', companyId);
+    console.log('[ML Callback] Code recebido:', code.substring(0, 20) + '...');
+
     // Troca o código pelos tokens
     const tokens = await exchangeCodeForTokens(code);
 
-    // Calcula data de expiração
-    const expiresAt = new Date(Date.now() + tokens.expiresIn * 1000);
+    console.log('[ML Callback] ✅ Tokens obtidos com sucesso');
+    console.log('[ML Callback] User ID ML:', tokens.userId);
+    console.log('[ML Callback] Expira em:', tokens.expiresIn, 'segundos');
 
-    // Verifica se já existe uma conta ML para essa empresa
-    const existingAccount = await prisma.mlAccount.findFirst({
-      where: { companyId },
-    });
+    // 🎯 USAR saveMlAccount que atualiza connectedAt = AGORA
+    await saveMlAccount(
+      companyId,
+      String(tokens.userId),
+      tokens.accessToken,
+      tokens.refreshToken,
+      tokens.expiresIn
+    );
 
-    if (existingAccount) {
-      // Atualiza a conta existente
-      await prisma.mlAccount.update({
-        where: { id: existingAccount.id },
-        data: {
-          mercadoLivreUserId: String(tokens.userId),
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          expiresAt,
-          isActive: true,
-          updatedAt: new Date(),
-        },
-      });
-    } else {
-      // Cria nova conta ML
-      await prisma.mlAccount.create({
-        data: {
-          companyId,
-          mercadoLivreUserId: String(tokens.userId),
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          expiresAt,
-          isActive: true,
-        },
-      });
-    }
+    console.log('[ML Callback] ========================================');
+    console.log('[ML Callback] ✅ CONTA CONECTADA COM SUCESSO!');
+    console.log('[ML Callback] ✅ connectedAt ATUALIZADO PARA AGORA');
+    console.log('[ML Callback] ========================================');
 
     // Redireciona de volta para a página de integração com sucesso
     return NextResponse.redirect(

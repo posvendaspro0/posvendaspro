@@ -3,11 +3,15 @@
  * GET /api/ml/claims
  */
 
-import { NextResponse } from 'next/server';
-import { requireClient } from '@/lib/auth-helpers';
-import { getValidAccessToken, getClaims, getMlAccountByCompanyId } from '@/services/mercadolivre-service';
+import { NextResponse } from "next/server";
+import { requireClient } from "@/lib/auth-helpers";
+import {
+  getValidAccessToken,
+  getClaims,
+  getMlAccountByCompanyId,
+} from "@/services/mercadolivre-service";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
@@ -17,66 +21,86 @@ export async function GET(request: Request) {
 
     if (!companyId) {
       return NextResponse.json(
-        { 
-          error: 'Usuário não está vinculado a uma empresa',
-          connected: false 
+        {
+          error: "Usuário não está vinculado a uma empresa",
+          connected: false,
         },
         { status: 400 }
       );
     }
 
     // Buscar conta ML e access token válido
-    console.log('[ML Claims API] Buscando conta ML para empresa:', companyId);
-    
+    console.log("[ML Claims API] Buscando conta ML para empresa:", companyId);
+
     const mlAccount = await getMlAccountByCompanyId(companyId);
-    
+
     if (!mlAccount) {
-      console.log('[ML Claims API] Conta ML não encontrada para empresa:', companyId);
+      console.log(
+        "[ML Claims API] Conta ML não encontrada para empresa:",
+        companyId
+      );
       return NextResponse.json(
-        { 
-          error: 'Conta do Mercado Livre não conectada. Por favor, conecte sua conta na página de Integrações.', 
-          connected: false 
+        {
+          error:
+            "Conta do Mercado Livre não conectada. Por favor, conecte sua conta na página de Integrações.",
+          connected: false,
         },
         { status: 200 }
       );
     }
 
     const accessToken = await getValidAccessToken(companyId);
-    
+
     if (!accessToken) {
-      console.log('[ML Claims API] Token não encontrado para empresa:', companyId);
+      console.log(
+        "[ML Claims API] Token não encontrado para empresa:",
+        companyId
+      );
       return NextResponse.json(
-        { 
-          error: 'Token do Mercado Livre inválido. Por favor, reconecte sua conta.', 
-          connected: false 
+        {
+          error:
+            "Token do Mercado Livre inválido. Por favor, reconecte sua conta.",
+          connected: false,
         },
         { status: 200 }
       );
     }
 
-    console.log('[ML Claims API] Token encontrado. User ID:', mlAccount.mercadoLivreUserId);
+    console.log(
+      "[ML Claims API] Token encontrado. User ID:",
+      mlAccount.mercadoLivreUserId
+    );
 
     // Extrair filtros da query string
     const { searchParams } = new URL(request.url);
-    const offset = parseInt(searchParams.get('offset') || '0');
-    const limit = parseInt(searchParams.get('limit') || '500'); // ✅ Aumentar para 500
-    const status = searchParams.get('status') || undefined;
+    const offset = parseInt(searchParams.get("offset") || "0");
+    const limit = parseInt(searchParams.get("limit") || "500"); // ✅ Aumentar para 500
+    const status = searchParams.get("status") || undefined;
 
     // Buscar reclamações na API do ML
     let claims;
     try {
-      console.log('[ML Claims API] ========================================');
-      console.log('[ML Claims API] 🔍 DEBUG COMPLETO - FILTROS DE DATA');
-      console.log('[ML Claims API] ========================================');
-      console.log('[ML Claims API] connectedAt (BRUTO):', mlAccount.connectedAt);
-      console.log('[ML Claims API] connectedAt (ISO):', mlAccount.connectedAt?.toISOString());
-      console.log('[ML Claims API] connectedAt (tipo):', typeof mlAccount.connectedAt);
-      console.log('[ML Claims API] Status solicitado:', status || 'TODOS');
-      console.log('[ML Claims API] User ID ML:', mlAccount.mercadoLivreUserId);
-      console.log('[ML Claims API] Limit:', limit);
-      console.log('[ML Claims API] Offset:', offset);
-      console.log('[ML Claims API] ========================================');
-      
+      console.log("[ML Claims API] ========================================");
+      console.log("[ML Claims API] 🔍 DEBUG COMPLETO - FILTROS DE DATA");
+      console.log("[ML Claims API] ========================================");
+      console.log(
+        "[ML Claims API] connectedAt (BRUTO):",
+        mlAccount.connectedAt
+      );
+      console.log(
+        "[ML Claims API] connectedAt (ISO):",
+        mlAccount.connectedAt?.toISOString()
+      );
+      console.log(
+        "[ML Claims API] connectedAt (tipo):",
+        typeof mlAccount.connectedAt
+      );
+      console.log("[ML Claims API] Status solicitado:", status || "TODOS");
+      console.log("[ML Claims API] User ID ML:", mlAccount.mercadoLivreUserId);
+      console.log("[ML Claims API] Limit:", limit);
+      console.log("[ML Claims API] Offset:", offset);
+      console.log("[ML Claims API] ========================================");
+
       // 🎯 FILTRO: Passar connectedAt para filtrar claims antigas
       claims = await getClaims(accessToken, {
         offset,
@@ -85,33 +109,38 @@ export async function GET(request: Request) {
         userId: mlAccount.mercadoLivreUserId, // ID do usuário no ML (obrigatório)
         connectedAt: mlAccount.connectedAt, // Data da conexão
       });
-      
-      console.log('[ML Claims API] ========================================');
-      console.log('[ML Claims API] 📊 RESULTADO DA BUSCA');
-      console.log('[ML Claims API] ========================================');
-      console.log('[ML Claims API] Total claims retornadas:', claims.data?.length || 0);
-      
-      if (claims.data && claims.data.length > 0) {
-        console.log('[ML Claims API] Primeira claim:');
-        console.log('[ML Claims API] - ID:', claims.data[0].id);
-        console.log('[ML Claims API] - Data criação:', claims.data[0].date_created);
-        console.log('[ML Claims API] - Status:', claims.data[0].status);
-        
-        console.log('[ML Claims API] Última claim:');
-        const last = claims.data[claims.data.length - 1];
-        console.log('[ML Claims API] - ID:', last.id);
-        console.log('[ML Claims API] - Data criação:', last.date_created);
-        console.log('[ML Claims API] - Status:', last.status);
-      }
-      console.log('[ML Claims API] ========================================');
 
+      console.log("[ML Claims API] ========================================");
+      console.log("[ML Claims API] 📊 RESULTADO DA BUSCA");
+      console.log("[ML Claims API] ========================================");
+      console.log(
+        "[ML Claims API] Total claims retornadas:",
+        claims.data?.length || 0
+      );
+
+      if (claims.data && claims.data.length > 0) {
+        console.log("[ML Claims API] Primeira claim:");
+        console.log("[ML Claims API] - ID:", claims.data[0].id);
+        console.log(
+          "[ML Claims API] - Data criação:",
+          claims.data[0].date_created
+        );
+        console.log("[ML Claims API] - Status:", claims.data[0].status);
+
+        console.log("[ML Claims API] Última claim:");
+        const last = claims.data[claims.data.length - 1];
+        console.log("[ML Claims API] - ID:", last.id);
+        console.log("[ML Claims API] - Data criação:", last.date_created);
+        console.log("[ML Claims API] - Status:", last.status);
+      }
+      console.log("[ML Claims API] ========================================");
 
       // Buscar dados complementares do banco para cada claim
       if (claims.data && claims.data.length > 0) {
         const claimIds = claims.data.map((claim: any) => String(claim.id));
-        
+
         // Buscar todos os dados complementares de uma vez
-        const { prisma } = await import('@/lib/prisma');
+        const { prisma } = await import("@/lib/prisma");
         const complementaryData = await prisma.mlClaimData.findMany({
           where: {
             companyId,
@@ -123,7 +152,7 @@ export async function GET(request: Request) {
 
         // Criar um map para acesso rápido
         const dataMap = new Map(
-          complementaryData.map(item => [item.mlClaimId, item])
+          complementaryData.map((item) => [item.mlClaimId, item])
         );
 
         // Mesclar dados ML + dados complementares
@@ -132,67 +161,75 @@ export async function GET(request: Request) {
           return {
             ...claim,
             // Adicionar dados complementares
-            _complementary: extra ? {
-              responsible: extra.responsible,
-              productSku: extra.productSku,
-              problemType: extra.problemType,
-              resolutionCost: extra.resolutionCost ? Number(extra.resolutionCost) : null,
-              observation: extra.observation,
-            } : null,
+            _complementary: extra
+              ? {
+                  responsible: extra.responsible,
+                  productSku: extra.productSku,
+                  problemType: extra.problemType,
+                  resolutionCost: extra.resolutionCost
+                    ? Number(extra.resolutionCost)
+                    : null,
+                  observation: extra.observation,
+                }
+              : null,
           };
         });
 
-        console.log('[ML Claims API] Dados complementares mesclados');
+        console.log("[ML Claims API] Dados complementares mesclados");
       }
     } catch (mlError) {
-      console.error('[ML Claims API] Erro ao chamar API ML:', mlError);
-      
+      console.error("[ML Claims API] Erro ao chamar API ML:", mlError);
+
       // Capturar detalhes do erro
-      const errorMessage = mlError instanceof Error ? mlError.message : String(mlError);
-      
+      const errorMessage =
+        mlError instanceof Error ? mlError.message : String(mlError);
+
       // Se for erro 401 (não autorizado)
-      if (errorMessage.includes('401')) {
+      if (errorMessage.includes("401")) {
         return NextResponse.json(
-          { 
-            error: 'Token do Mercado Livre inválido ou expirado. Por favor, reconecte sua conta.', 
+          {
+            error:
+              "Token do Mercado Livre inválido ou expirado. Por favor, reconecte sua conta.",
             connected: false,
-            details: errorMessage
+            details: errorMessage,
           },
           { status: 200 }
         );
       }
-      
+
       // Se for erro 403 (sem permissão)
-      if (errorMessage.includes('403')) {
+      if (errorMessage.includes("403")) {
         return NextResponse.json(
-          { 
-            error: 'Sem permissão para acessar reclamações. Verifique as permissões do aplicativo no Mercado Livre.', 
+          {
+            error:
+              "Sem permissão para acessar reclamações. Verifique as permissões do aplicativo no Mercado Livre.",
             connected: false,
-            details: errorMessage
+            details: errorMessage,
           },
           { status: 200 }
         );
       }
-      
+
       // Se for erro 404 (endpoint não encontrado)
-      if (errorMessage.includes('404')) {
+      if (errorMessage.includes("404")) {
         return NextResponse.json(
-          { 
-            error: 'Endpoint de reclamações não encontrado. Pode não haver reclamações ou o endpoint mudou.', 
+          {
+            error:
+              "Endpoint de reclamações não encontrado. Pode não haver reclamações ou o endpoint mudou.",
             connected: true,
             claims: [],
-            details: errorMessage
+            details: errorMessage,
           },
           { status: 200 }
         );
       }
-      
+
       // Erro genérico da API ML
       return NextResponse.json(
-        { 
-          error: 'Erro ao buscar reclamações do Mercado Livre', 
+        {
+          error: "Erro ao buscar reclamações do Mercado Livre",
           connected: false,
-          details: errorMessage
+          details: errorMessage,
         },
         { status: 200 }
       );
@@ -204,16 +241,15 @@ export async function GET(request: Request) {
       paging: claims.paging || {},
     });
   } catch (error) {
-    console.error('[ML Claims API] Erro geral:', error);
-    
+    console.error("[ML Claims API] Erro geral:", error);
+
     return NextResponse.json(
-      { 
-        error: 'Erro interno ao processar requisição', 
+      {
+        error: "Erro interno ao processar requisição",
         details: error instanceof Error ? error.message : String(error),
-        connected: false 
+        connected: false,
       },
       { status: 500 }
     );
   }
 }
-
