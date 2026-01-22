@@ -56,3 +56,8 @@ export async function GET(request: Request) {
   }
 }
 
+// Alguns provedores/ambientes podem enviar POST no callback
+export async function POST(request: Request) {
+  return GET(request);
+}
+
