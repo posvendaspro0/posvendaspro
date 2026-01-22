@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     console.log('[ML Callback] User ID ML:', tokens.userId);
     console.log('[ML Callback] Expira em:', tokens.expiresIn, 'segundos');
 
-    // 🎯 USAR saveMlAccount que atualiza connectedAt = AGORA
+    // 🎯 USAR saveMlAccount que mantém connectedAt da 1a conexão
     await saveMlAccount(
       companyId,
       String(tokens.userId),
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
     console.log('[ML Callback] ========================================');
     console.log('[ML Callback] ✅ CONTA CONECTADA COM SUCESSO!');
-    console.log('[ML Callback] ✅ connectedAt ATUALIZADO PARA AGORA');
+    console.log('[ML Callback] ✅ connectedAt mantido na 1a conexão');
     console.log('[ML Callback] ========================================');
 
     // Redireciona de volta para a página de integração com sucesso

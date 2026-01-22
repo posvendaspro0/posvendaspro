@@ -87,7 +87,7 @@ export async function refreshAccessToken(refreshToken: string) {
 
   return {
     accessToken: data.access_token,
-    refreshToken: data.refresh_token,
+    refreshToken: data.refresh_token || refreshToken,
     expiresIn: data.expires_in,
   };
 }
@@ -452,22 +452,26 @@ export async function saveMlAccount(
 ) {
   const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-  // 🎯 connectedAt = 7 dias atrás (buscar claims dos últimos 7 dias)
-  // Isso evita problemas com data do sistema e garante margem de segurança
+  const now = new Date();
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const existing = await prisma.mlAccount.findUnique({ where: { companyId } });
+
+  let connectedAtToUse = existing?.connectedAt ?? sevenDaysAgo;
+
+  // Se connectedAt veio inválido (no futuro), corrigir para 7 dias atrás
+  if (connectedAtToUse.getTime() > now.getTime()) {
+    connectedAtToUse = sevenDaysAgo;
+  }
 
   console.log("[saveMlAccount] ========================================");
-  console.log("[saveMlAccount] 📅 Definindo connectedAt");
+  console.log("[saveMlAccount] 📅 Definindo connectedAt (primeira conexão)");
   console.log("[saveMlAccount] ========================================");
+  console.log("[saveMlAccount] Data atual do sistema:", now.toISOString());
   console.log(
-    "[saveMlAccount] Data atual do sistema:",
-    new Date().toISOString()
+    "[saveMlAccount] connectedAt utilizado:",
+    connectedAtToUse.toISOString()
   );
-  console.log(
-    "[saveMlAccount] connectedAt (7 dias atrás):",
-    sevenDaysAgo.toISOString()
-  );
-  console.log("[saveMlAccount] ✅ Buscará claims dos últimos 7 dias");
+  console.log("[saveMlAccount] ✅ Buscará claims a partir desta data");
   console.log("[saveMlAccount] ========================================");
 
   return prisma.mlAccount.upsert({
@@ -477,7 +481,7 @@ export async function saveMlAccount(
       accessToken,
       refreshToken,
       expiresAt,
-      connectedAt: sevenDaysAgo, // ✅ 7 dias atrás
+      connectedAt: connectedAtToUse, // ✅ manter primeira conexão
     },
     create: {
       companyId,
@@ -485,7 +489,7 @@ export async function saveMlAccount(
       accessToken,
       refreshToken,
       expiresAt,
-      connectedAt: sevenDaysAgo, // ✅ 7 dias atrás
+      connectedAt: connectedAtToUse, // ✅ 7 dias atrás da 1a conexão
     },
   });
 }
@@ -574,6 +578,10 @@ export async function getValidAccessToken(
       companyId,
       userId: mlAccount.mercadoLivreUserId,
     });
+    // Se ainda há tempo de validade, manter o token atual para não "deslogar"
+    if (timeUntilExpiry > 0) {
+      return mlAccount.accessToken;
+    }
     return null;
   }
 }

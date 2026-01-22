@@ -78,11 +78,27 @@ export async function GET(request: Request) {
     let claims: any;
 
     try {
+      const now = new Date();
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const hasInvalidConnectedAt =
+        !mlAccount.connectedAt || mlAccount.connectedAt.getTime() > now.getTime();
+      const effectiveConnectedAt = hasInvalidConnectedAt
+        ? sevenDaysAgo
+        : mlAccount.connectedAt;
+
+      if (hasInvalidConnectedAt) {
+        const { prisma } = await import("@/lib/prisma");
+        await prisma.mlAccount.update({
+          where: { companyId },
+          data: { connectedAt: effectiveConnectedAt },
+        });
+      }
+
       // 🚀 Buscar TODAS as claims (sem limite)
       const result = await fetchAllClaims({
         accessToken,
         userId: mlAccount.mercadoLivreUserId,
-        connectedAt: mlAccount.connectedAt,
+        connectedAt: effectiveConnectedAt,
         status,
       });
 

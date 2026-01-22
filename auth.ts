@@ -9,6 +9,7 @@ import { verifyPassword } from '@/lib/auth-utils';
  * SEM middleware - proteção em nível de componente
  */
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: '/login',
   },
@@ -76,7 +77,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 dias
+    maxAge: 90 * 24 * 60 * 60, // 90 dias
+    updateAge: 24 * 60 * 60, // renova a sessão a cada 24h
+  },
+  jwt: {
+    maxAge: 90 * 24 * 60 * 60, // 90 dias
   },
   cookies: {
     sessionToken: {
