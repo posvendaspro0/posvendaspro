@@ -48,12 +48,12 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full w-64 flex-col bg-slate-900 text-white">
+    <div className="flex h-full w-64 flex-col bg-slate-900 text-white overflow-hidden">
       <div className="flex h-16 items-center px-6 border-b border-slate-800">
         <h1 className="text-xl font-bold">PósVendas Pro</h1>
       </div>
       
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 min-h-0 space-y-1 px-3 py-4 overflow-y-auto overscroll-contain">
         {navigation.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || 

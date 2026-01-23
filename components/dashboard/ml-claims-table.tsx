@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -48,6 +49,7 @@ import {
   Circle,
   PlayCircle,
   XCircle,
+  Info,
   Package,
   Calendar as CalendarIcon,
   User,
@@ -68,6 +70,12 @@ import {
   isWithinInterval,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MlClaimsTableProps {
   onClaimsLoaded?: (count: number) => void;
@@ -180,7 +188,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
   // Estados de paginação
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const applyLocalEdits = useCallback((items: any[]) => {
     try {
@@ -336,6 +344,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     [applyLocalEdits, onClaimsLoaded, claims.length, totalDbCount]
   );
 
+  const router = useRouter();
   const fetchConnectionStatus = useCallback(
     async (showDetails = false) => {
       try {
@@ -571,6 +580,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     customDateTo,
     sortField,
     sortOrder,
+    itemsPerPage,
   ]);
 
   const toggleSort = (field: SortField) => {
@@ -658,6 +668,17 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  if (!hasFetched) {
+    return (
+      <Card className="border-slate-200">
+        <CardContent className="flex items-center justify-center gap-3 py-12 text-slate-600">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+          <span className="text-sm">Carregando reclamações...</span>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -838,7 +859,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
       </div>
 
       {/* Filtros */}
-      {hasAnyClaims && (
+      {hasFetched && (
         <Card className="border-slate-200 shadow-sm">
           <CardContent className="pt-6 pb-6">
             {/* Header */}
@@ -857,25 +878,44 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   </p>
                 </div>
               </div>
-              {(searchTerm ||
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span>Itens por página</span>
+                  <Select
+                    value={String(itemsPerPage)}
+                    onValueChange={(value) => setItemsPerPage(Number(value))}
+                  >
+                    <SelectTrigger className="h-9 w-[110px] text-xs bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {(searchTerm ||
                 statusFilter !== "all" ||
                 dateFilter !== "all") && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setStatusFilter("all");
-                    setDateFilter("all");
-                    setCustomDateFrom(undefined);
-                    setCustomDateTo(undefined);
-                  }}
-                  className="h-9 text-xs"
-                >
-                  <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                  Limpar filtros
-                </Button>
-              )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatusFilter("all");
+                      setDateFilter("all");
+                      setCustomDateFrom(undefined);
+                      setCustomDateTo(undefined);
+                    }}
+                    className="h-9 text-xs"
+                  >
+                    <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Grid de Filtros */}
@@ -912,6 +952,67 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   >
                     <Circle className="h-3.5 w-3.5" />
                     Status
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-700"
+                          >
+                            <Info className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <div className="space-y-2">
+                            <div className="font-semibold text-slate-900">
+                              Legenda de status
+                            </div>
+                            <div className="text-slate-700">
+                              <span className="font-medium text-orange-700">
+                                Aberta
+                              </span>{" "}
+                              → Reclamação recebida, aguardando ação.
+                            </div>
+                            <div className="text-slate-700">
+                              <span className="font-medium text-orange-700">
+                                Reclamação (claim)
+                              </span>{" "}
+                              → Etapa onde intervém comprador e vendedor.
+                            </div>
+                            <div className="text-slate-700">
+                              <span className="font-medium text-blue-700">
+                                Mediação (dispute)
+                              </span>{" "}
+                              → Mercado Livre participa da disputa.
+                            </div>
+                            <div className="text-slate-700">
+                              <span className="font-medium text-violet-700">
+                                Recontato
+                              </span>{" "}
+                              → Reabertura após contato do comprador.
+                            </div>
+                            <div className="text-slate-700">
+                              <span className="font-medium text-slate-700">
+                                ML Case (stale)
+                              </span>{" "}
+                              → Intervém comprador e ML.
+                            </div>
+                            <div className="text-slate-700">
+                              <span className="font-medium text-slate-700">
+                                Concluída
+                              </span>{" "}
+                              → Reclamação encerrada.
+                            </div>
+                            <div className="text-slate-700">
+                              <span className="font-medium text-red-700">
+                                Perdida
+                              </span>{" "}
+                              → Reclamação perdida.
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </Label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger
@@ -1251,7 +1352,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
       )}
 
       {/* Mensagem quando não há claims */}
-      {!hasAnyClaims && (
+      {hasFetched && !hasAnyClaims && (
         <Card className="border-slate-200">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="rounded-full bg-slate-100 p-4 mb-4">
@@ -1516,7 +1617,18 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   return (
                     <TableRow
                       key={claim.id}
-                      className="hover:bg-slate-50 transition-colors"
+                      className="hover:bg-slate-50 transition-colors cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() =>
+                        router.push(`/dashboard/reclamacoes/${claim.id}`)
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          router.push(`/dashboard/reclamacoes/${claim.id}`);
+                        }
+                      }}
                     >
                       {/* ID Reclamação */}
                       <TableCell className="font-mono text-sm font-medium text-slate-900">
@@ -1670,7 +1782,10 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                           asChild
                           className="h-8"
                         >
-                          <Link href={`/dashboard/reclamacoes/${claim.id}`}>
+                          <Link
+                            href={`/dashboard/reclamacoes/${claim.id}`}
+                            onClick={(event) => event.stopPropagation()}
+                          >
                             <Eye className="h-3.5 w-3.5 mr-1.5" />
                             Detalhes
                           </Link>
@@ -1759,135 +1874,6 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
         </Card>
       )}
 
-      {/* Legenda no Final da Página */}
-      {hasAnyClaims && (
-        <Card className="border-slate-200">
-          <CardContent className="pt-6 pb-6">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="rounded-lg bg-blue-100 p-2">
-                <FileText className="h-4 w-4 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-900">Status</h3>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Selecionar uma das opções:
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-orange-100 p-1.5 mt-0.5">
-                  <AlertCircle className="h-3 w-3 text-orange-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-orange-900">Aberta</span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Reclamação recebida, aguardando ação.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-orange-100 p-1.5 mt-0.5">
-                  <AlertCircle className="h-3 w-3 text-orange-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-orange-900">
-                    Reclamação (claim)
-                  </span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Etapa onde intervém o comprador e o vendedor.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-blue-100 p-1.5 mt-0.5">
-                  <PlayCircle className="h-3 w-3 text-blue-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-blue-900">
-                    Mediação (dispute)
-                  </span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Etapa onde intervém um representante do Mercado Livre.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-violet-100 p-1.5 mt-0.5">
-                  <AlertCircle className="h-3 w-3 text-violet-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-violet-900">
-                    Recontato (recontact)
-                  </span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Uma parte entra em contato após o fechamento.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-slate-100 p-1.5 mt-0.5">
-                  <Circle className="h-3 w-3 text-slate-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-slate-900">N/A (none)</span>
-                  <span className="text-slate-600"> → Não se aplica.</span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-amber-100 p-1.5 mt-0.5">
-                  <AlertCircle className="h-3 w-3 text-amber-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-amber-900">
-                    ML Case (stale)
-                  </span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Intervém comprador e ML para reclamações do tipo ml_case.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-green-100 p-1.5 mt-0.5">
-                  <CheckCircle2 className="h-3 w-3 text-green-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-green-900">Concluído</span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Caso encerrado com sucesso.
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-red-100 p-1.5 mt-0.5">
-                  <XCircle className="h-3 w-3 text-red-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-red-900">Perdida</span>
-                  <span className="text-slate-600">
-                    {" "}
-                    → Caso encerrado sem sucesso.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
