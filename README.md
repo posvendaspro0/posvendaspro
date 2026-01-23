@@ -8,6 +8,8 @@ Sistema profissional de gerenciamento de tickets (reclamações) para empresas q
 
 ## 🚀 **Tecnologias Utilizadas**
 
+_Última atualização do README: manutenção rápida._
+
 ### **Frontend**
 - ⚛️ **Next.js 15** - App Router
 - 🎨 **React 19** - UI Components
