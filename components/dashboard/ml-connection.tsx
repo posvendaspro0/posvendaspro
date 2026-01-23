@@ -28,6 +28,11 @@ export function MercadoLivreConnection({ isConnected, mlUserId }: MercadoLivreCo
   const router = useRouter();
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [status, setStatus] = useState<{
+    connected: boolean;
+    isExpired?: boolean;
+    timeUntilExpiry?: number;
+  } | null>(null);
 
   // Verificar status da URL (sucesso ou erro no callback)
   useEffect(() => {
@@ -45,6 +50,29 @@ export function MercadoLivreConnection({ isConnected, mlUserId }: MercadoLivreCo
       setAlert({ type: 'error', message: errorMessage });
     }
   }, [searchParams, router]);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const response = await fetch('/api/ml/status', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-store',
+          },
+        });
+        const data = await response.json();
+        setStatus({
+          connected: Boolean(data?.connected),
+          isExpired: Boolean(data?.details?.isExpired),
+          timeUntilExpiry: data?.details?.timeUntilExpiry,
+        });
+      } catch (error) {
+        console.error('Erro ao verificar status ML:', error);
+      }
+    };
+
+    fetchStatus();
+  }, []);
 
   const handleConnect = () => {
     // Redireciona para o endpoint de autenticação
@@ -78,6 +106,9 @@ export function MercadoLivreConnection({ isConnected, mlUserId }: MercadoLivreCo
     }
   };
 
+  const isEffectivelyConnected =
+    status !== null ? Boolean(status.connected && !status.isExpired) : isConnected;
+
   return (
     <div className="space-y-6">
       {/* Alertas */}
@@ -100,7 +131,7 @@ export function MercadoLivreConnection({ isConnected, mlUserId }: MercadoLivreCo
               <CardTitle>Status da Conexão</CardTitle>
               <CardDescription>Gerencie a conexão com sua conta do Mercado Livre</CardDescription>
             </div>
-            {isConnected ? (
+            {isEffectivelyConnected ? (
               <Badge className="bg-green-100 text-green-800">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 Conectado
@@ -114,7 +145,7 @@ export function MercadoLivreConnection({ isConnected, mlUserId }: MercadoLivreCo
           </div>
         </CardHeader>
         <CardContent>
-          {isConnected ? (
+          {isEffectivelyConnected ? (
             <div className="space-y-4">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
@@ -152,6 +183,15 @@ export function MercadoLivreConnection({ isConnected, mlUserId }: MercadoLivreCo
             </div>
           ) : (
             <div className="space-y-4">
+              {status?.isExpired && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Token do Mercado Livre expirado. Conecte novamente para
+                    continuar a sincronização.
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-slate-600 mt-0.5" />

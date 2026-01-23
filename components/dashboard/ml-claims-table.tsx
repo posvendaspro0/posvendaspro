@@ -5,7 +5,7 @@
  * Exibe reclamações vindas diretamente da API ML
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ import {
   Eye,
   Loader2,
   AlertCircle,
+  Link as LinkIcon,
   Search,
   Filter,
   ArrowUpDown,
@@ -147,8 +148,22 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [hasFetched, setHasFetched] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
-  const [lastFromCache, setLastFromCache] = useState<boolean | null>(null);
-  const [lastSource, setLastSource] = useState<string | null>(null);
+  const [totalDbCount, setTotalDbCount] = useState<number | null>(null);
+  const [refreshNotice, setRefreshNotice] = useState<{
+    type: "success" | "info" | "error";
+    message: string;
+  } | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<{
+    connected: boolean;
+    isExpired?: boolean;
+    timeUntilExpiry?: number;
+    mercadoLivreUserId?: string;
+  } | null>(null);
+  const requestSeqRef = useRef(0);
+  const latestRequestRef = useRef(0);
+  const inFlightRef = useRef<number | null>(null);
+  const isManualRefreshingRef = useRef(false);
+  const refreshNoticeTimeoutRef = useRef<number | null>(null);
 
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -190,19 +205,40 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   }, []);
 
   const fetchClaims = useCallback(
-    async (forceRefresh = false) => {
+    async (forceRefresh = false, silent = false) => {
+      if (silent && (isManualRefreshingRef.current || inFlightRef.current)) {
+        return;
+      }
+      const requestId = ++requestSeqRef.current;
+      latestRequestRef.current = requestId;
+      inFlightRef.current = requestId;
+      if (forceRefresh) {
+        isManualRefreshingRef.current = true;
+      }
       try {
-        setLoading(true);
+        if (!silent) {
+          setLoading(true);
+        }
         setError(null);
 
         console.log("[ML Claims Table] Iniciando busca de reclamações...");
         const response = await fetch(
-          `/api/ml/claims?limit=100${forceRefresh ? "&refresh=1" : ""}`
+          `/api/ml/claims?limit=100${forceRefresh ? "&refresh=1" : ""}`,
+          {
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-store",
+            },
+          }
         );
 
         console.log("[ML Claims Table] Resposta recebida:", response.status);
         const data = await response.json();
         console.log("[ML Claims Table] Dados completos:", data);
+
+        if (requestId !== latestRequestRef.current) {
+          return;
+        }
 
         if (!data.connected) {
           const errorMsg =
@@ -210,35 +246,16 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
             "Conecte sua conta do Mercado Livre para ver as reclamações";
           console.log("[ML Claims Table] Não conectado:", errorMsg);
 
-          // Se tem detalhes, adicionar ao erro
           const fullError = data.details
             ? `${errorMsg}\n\nDetalhes técnicos: ${data.details}`
             : errorMsg;
 
           setError(fullError);
           setDebugInfo(data);
-          // Se houver cache local, manter os dados em tela
-          const cached = localStorage.getItem("ml-claims-data");
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              if (Array.isArray(parsed.claims)) {
-                const merged = applyLocalEdits(parsed.claims);
-                setClaims(merged);
-                setFilteredClaims(merged);
-                setLastUpdatedAt(
-                  parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null
-                );
-                setLastFromCache(Boolean(parsed.cached));
-                onClaimsLoaded?.(merged.length);
-                return;
-              }
-            } catch {
-              localStorage.removeItem("ml-claims-data");
-            }
-          }
           setClaims([]);
+          setFilteredClaims([]);
           onClaimsLoaded?.(0);
+          setTotalDbCount(null);
           return;
         }
 
@@ -256,90 +273,136 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
         );
         const claimsDataRaw = data.claims || [];
         const claimsData = applyLocalEdits(claimsDataRaw);
-        const cachePayload = {
-          claims: claimsData,
-          lastUpdatedAt: new Date().toISOString(),
-          cached: Boolean(data.cached),
-          source: data.source || null,
-        };
-        localStorage.setItem("ml-claims-data", JSON.stringify(cachePayload));
+        const resolvedUpdatedAt = data.lastUpdatedAt
+          ? new Date(data.lastUpdatedAt)
+          : new Date();
+        const previousTotal = totalDbCount ?? claims.length;
+        const nextTotal =
+          typeof data.totalDb === "number" ? data.totalDb : claimsData.length;
+        if (requestId !== latestRequestRef.current) {
+          return;
+        }
         setClaims(claimsData);
         setFilteredClaims(claimsData); // Inicializar filteredClaims
-        setLastUpdatedAt(new Date());
-        setLastFromCache(Boolean(data.cached));
-        setLastSource(data.source || null);
+        setLastUpdatedAt(resolvedUpdatedAt);
         onClaimsLoaded?.(claimsData.length);
+        setTotalDbCount(
+          typeof data.totalDb === "number" ? data.totalDb : claimsData.length
+        );
+
+        if (forceRefresh) {
+          const newItems = Math.max(0, nextTotal - previousTotal);
+          setRefreshNotice({
+            type: newItems > 0 ? "success" : "info",
+            message:
+              newItems > 0
+                ? `Atualizacao concluida: ${newItems} novas reclamacoes.`
+                : "Nenhuma nova reclamacao encontrada.",
+          });
+        }
       } catch (err) {
+        if (requestId !== latestRequestRef.current) {
+          return;
+        }
         console.error("[ML Claims Table] Erro ao buscar claims:", err);
-        setError(err instanceof Error ? err.message : "Erro desconhecido");
-        const cached = localStorage.getItem("ml-claims-data");
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed.claims)) {
-              const merged = applyLocalEdits(parsed.claims);
-              setClaims(merged);
-              setFilteredClaims(merged);
-              setLastUpdatedAt(
-                parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null
-              );
-              setLastFromCache(Boolean(parsed.cached));
-              onClaimsLoaded?.(merged.length);
-              return;
-            }
-          } catch {
-            localStorage.removeItem("ml-claims-data");
+        const hasData = claims.length > 0;
+        if (!forceRefresh && !hasData) {
+          setError(err instanceof Error ? err.message : "Erro desconhecido");
+          setClaims([]);
+          setFilteredClaims([]);
+          setTotalDbCount(null);
+          onClaimsLoaded?.(0);
+        } else if (forceRefresh) {
+          setRefreshNotice({
+            type: "error",
+            message: "Erro ao atualizar. Tente novamente em instantes.",
+          });
+        }
+      } finally {
+        if (requestId === latestRequestRef.current) {
+          setHasFetched(true);
+          if (!silent) {
+            setLoading(false);
+          }
+          if (forceRefresh) {
+            isManualRefreshingRef.current = false;
           }
         }
-        setClaims([]);
-        setFilteredClaims([]);
-        onClaimsLoaded?.(0);
-      } finally {
-        setHasFetched(true);
-        setLoading(false);
+        if (inFlightRef.current === requestId) {
+          inFlightRef.current = null;
+        }
       }
     },
-    [applyLocalEdits, onClaimsLoaded]
+    [applyLocalEdits, onClaimsLoaded, claims.length, totalDbCount]
+  );
+
+  const fetchConnectionStatus = useCallback(
+    async (showDetails = false) => {
+      try {
+        const response = await fetch("/api/ml/status", {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        });
+        const data = await response.json();
+        setConnectionStatus({
+          connected: Boolean(data?.connected),
+          isExpired: Boolean(data?.details?.isExpired),
+          timeUntilExpiry: data?.details?.timeUntilExpiry,
+          mercadoLivreUserId: data?.details?.mercadoLivreUserId,
+        });
+        if (showDetails) {
+          setDebugInfo(data);
+          setShowDebug(true);
+        }
+      } catch (err) {
+        console.error("Erro ao verificar status:", err);
+      }
+    },
+    []
   );
 
   useEffect(() => {
-    const cached = localStorage.getItem("ml-claims-data");
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed.claims)) {
-          const merged = applyLocalEdits(parsed.claims);
-          setClaims(merged);
-          setFilteredClaims(merged);
-          setLastUpdatedAt(parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null);
-          setLastFromCache(Boolean(parsed.cached));
-          setLastSource(parsed.source || null);
-          setHasFetched(true);
-        }
-      } catch {
-        localStorage.removeItem("ml-claims-data");
-      }
+    if (!refreshNotice) return;
+    if (refreshNoticeTimeoutRef.current) {
+      window.clearTimeout(refreshNoticeTimeoutRef.current);
     }
+    refreshNoticeTimeoutRef.current = window.setTimeout(() => {
+      setRefreshNotice(null);
+    }, 4000);
+  }, [refreshNotice]);
+
+  useEffect(() => {
     fetchClaims(false);
-  }, [fetchClaims]);
+    fetchConnectionStatus(false);
+  }, [fetchClaims, fetchConnectionStatus]);
 
   useEffect(() => {
     const shouldRefresh = localStorage.getItem('ml-claims-refresh') === '1';
     if (shouldRefresh) {
       localStorage.removeItem('ml-claims-refresh');
-      fetchClaims(true);
+      fetchClaims(true, true);
     }
   }, [fetchClaims]);
 
   useEffect(() => {
     const handleClaimsUpdated = () => {
-      fetchClaims(true);
+      fetchClaims(true, true);
     };
 
     window.addEventListener("ml-claims-updated", handleClaimsUpdated);
     return () => {
       window.removeEventListener("ml-claims-updated", handleClaimsUpdated);
     };
+  }, [fetchClaims]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchClaims(false, true);
+    }, 10 * 1000);
+
+    return () => clearInterval(interval);
   }, [fetchClaims]);
 
   // Aplicar filtros e ordenação
@@ -532,31 +595,73 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     );
   };
 
-  if (loading) {
+  const checkStatus = async () => {
+    await fetchConnectionStatus(true);
+  };
+
+  const shouldShowConnection =
+    connectionStatus &&
+    (!connectionStatus.connected || connectionStatus.isExpired);
+  const connectionMessage = connectionStatus?.isExpired
+    ? "Token do Mercado Livre expirado. Conecte novamente sua conta."
+    : "Conta do Mercado Livre não conectada. Conecte para visualizar as reclamações.";
+
+  if (shouldShowConnection) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-3" />
-          <span className="text-slate-600 font-medium">
-            Carregando reclamações do Mercado Livre...
-          </span>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Card className="border-slate-200 bg-white shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-2.5">
+                  <AlertCircle className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-base font-semibold text-slate-900">
+                      Integração Mercado Livre
+                    </h3>
+                    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                      Atenção
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600">{connectionMessage}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                <Button size="sm" asChild className="gap-2">
+                  <Link href="/dashboard/integracao">
+                    <LinkIcon className="h-4 w-4" />
+                    Conectar Conta
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => fetchClaims(true)}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Atualizar
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  onClick={checkStatus}
+                >
+                  <FileText className="h-4 w-4" />
+                  Detalhes
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
-  const checkStatus = async () => {
-    try {
-      const response = await fetch("/api/ml/status");
-      const data = await response.json();
-      setDebugInfo(data);
-      setShowDebug(true);
-    } catch (err) {
-      console.error("Erro ao verificar status:", err);
-    }
-  };
-
-  if (error) {
+  if (error && claims.length === 0) {
     return (
       <div className="space-y-4">
         <Card className="border-blue-200 bg-blue-50">
@@ -654,34 +759,82 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Reclamações</h1>
-          <p className="text-slate-500 mt-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-bold text-slate-900">Reclamações</h1>
+          </div>
+          <p className="text-slate-500">
             Gerencie as reclamações do Mercado Livre
           </p>
-          <p className="text-sm text-slate-600 mt-2">
+          <p className="text-sm text-slate-600">
             {lastUpdatedAt
               ? `Última atualização: ${format(lastUpdatedAt, "dd/MM/yyyy HH:mm", {
                   locale: ptBR,
-                })}${lastFromCache ? " (cache)" : ""}${
-                  lastSource ? ` · Fonte: ${lastSource}` : ""
-                }`
+                })}`
               : "Clique em “Atualizar reclamações” para buscar os dados."}
           </p>
-        </div>
-        <Button
-          onClick={() => fetchClaims(true)}
-          disabled={loading}
-          className="gap-2"
-        >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
+          {refreshNotice && (
+            <Alert
+              className={`mt-3 ${
+                refreshNotice.type === "success"
+                  ? "border-green-200 bg-green-50 text-green-900"
+                  : refreshNotice.type === "info"
+                  ? "border-blue-200 bg-blue-50 text-blue-900"
+                  : "border-red-200 bg-red-50 text-red-900"
+              }`}
+            >
+              {refreshNotice.type === "success" ? (
+                <CheckCircle2 className="h-4 w-4" />
+              ) : refreshNotice.type === "info" ? (
+                <AlertCircle className="h-4 w-4" />
+              ) : (
+                <AlertCircle className="h-4 w-4" />
+              )}
+              <AlertDescription>{refreshNotice.message}</AlertDescription>
+            </Alert>
           )}
-          Atualizar reclamações
-        </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {connectionStatus && (
+            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  connectionStatus.connected && !connectionStatus.isExpired
+                    ? "bg-green-500"
+                    : "bg-red-500"
+                }`}
+              />
+              <span className="text-xs font-medium text-slate-700">
+                {connectionStatus.connected && !connectionStatus.isExpired
+                  ? "Conectado"
+                  : "Desconectado"}
+              </span>
+              {connectionStatus.connected &&
+                !connectionStatus.isExpired &&
+                typeof connectionStatus.timeUntilExpiry === "number" && (
+                  <span className="text-[11px] text-slate-500">
+                    expira em {connectionStatus.timeUntilExpiry} min
+                  </span>
+                )}
+              {connectionStatus.connected && connectionStatus.isExpired && (
+                <span className="text-[11px] text-red-600">token expirado</span>
+              )}
+            </div>
+          )}
+          <Button
+            onClick={() => fetchClaims(true)}
+            disabled={loading}
+            className="gap-2"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Atualizar reclamações
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -699,7 +852,8 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                     Filtros e ordenação
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Mostrando {filteredClaims.length} de {claims.length} reclamações
+                    Mostrando {filteredClaims.length} de{" "}
+                    {totalDbCount ?? claims.length} reclamações
                   </p>
                 </div>
               </div>
@@ -1536,7 +1690,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 <div className="text-sm text-slate-600">
                   Mostrando {startIndex + 1} a{" "}
                   {Math.min(endIndex, filteredClaims.length)} de{" "}
-                  {filteredClaims.length} reclamações
+                  {totalDbCount ?? claims.length} reclamações
                 </div>
 
                 <div className="flex items-center gap-2">

@@ -14,12 +14,6 @@ import { persistClaims } from "@/services/ml-claims-sync";
 
 export const dynamic = "force-dynamic";
 
-const CACHE_TTL_MS = 60 * 60 * 1000;
-const claimsCache = new Map<
-  string,
-  { expiresAt: number; payload: { claims: any[]; paging: any } }
->();
-
 export async function GET(request: Request) {
   try {
     const session = await requireClient();
@@ -62,6 +56,30 @@ export async function GET(request: Request) {
     const refresh = searchParams.get("refresh") === "1";
 
     let claims: any;
+    const getLastUpdatedAt = (
+      claims: Array<{
+        lastUpdated?: Date | null;
+        dateCreated?: Date | null;
+      }>,
+      complementary: Array<{
+        updatedAt?: Date | null;
+        createdAt?: Date | null;
+      }>
+    ) => {
+      const claimTimestamps = claims
+        .map((item) => item.lastUpdated || item.dateCreated)
+        .filter((value): value is Date => Boolean(value))
+        .map((value) => value.getTime());
+
+      const complementaryTimestamps = complementary
+        .map((item) => item.updatedAt || item.createdAt)
+        .filter((value): value is Date => Boolean(value))
+        .map((value) => value.getTime());
+
+      const timestamps = [...claimTimestamps, ...complementaryTimestamps];
+      if (timestamps.length === 0) return null;
+      return new Date(Math.max(...timestamps));
+    };
 
     try {
       const { prisma } = await import("@/lib/prisma");
@@ -102,12 +120,15 @@ export async function GET(request: Request) {
           }
         }
 
-        const storedClaims = await prisma.mlClaim.findMany({
-          where: whereClause,
-          orderBy: {
-            dateCreated: "desc",
-          },
-        });
+        const [storedClaims, totalDb] = await Promise.all([
+          prisma.mlClaim.findMany({
+            where: whereClause,
+            orderBy: {
+              dateCreated: "desc",
+            },
+          }),
+          prisma.mlClaim.count({ where: { companyId } }),
+        ]);
 
         const claimIds = storedClaims.map((claim) => String(claim.mlClaimId));
         const complementaryData = await prisma.mlClaimData.findMany({
@@ -155,6 +176,7 @@ export async function GET(request: Request) {
         });
 
         if (mergedClaims.length > 0) {
+          const lastUpdatedAt = getLastUpdatedAt(storedClaims, complementaryData);
           return NextResponse.json({
             connected: true,
             claims: mergedClaims,
@@ -163,7 +185,8 @@ export async function GET(request: Request) {
               offset: 0,
               limit: mergedClaims.length,
             },
-            source: "db",
+            totalDb,
+            lastUpdatedAt,
           });
         }
       }
@@ -190,25 +213,6 @@ export async function GET(request: Request) {
         mlAccount.mercadoLivreUserId
       );
 
-      const cacheKey = `${companyId}:${status || "all"}:${effectiveConnectedAt.toISOString()}`;
-      const cached = claimsCache.get(cacheKey);
-      if (cached && cached.expiresAt > Date.now()) {
-        return NextResponse.json(
-          {
-            connected: true,
-            claims: cached.payload.claims,
-            paging: cached.payload.paging,
-            cached: true,
-            source: "cache",
-          },
-          {
-            headers: {
-              "Cache-Control": "private, max-age=3600",
-            },
-          }
-        );
-      }
-
       // 🚀 Buscar TODAS as claims (sem limite)
       const result = await fetchAllClaims({
         accessToken,
@@ -225,12 +229,15 @@ export async function GET(request: Request) {
       }
 
       // Após atualizar o banco, retornar SEMPRE os dados do banco
-      const storedClaims = await prisma.mlClaim.findMany({
-        where: { companyId },
-        orderBy: {
-          dateCreated: "desc",
-        },
-      });
+      const [storedClaims, totalDb] = await Promise.all([
+        prisma.mlClaim.findMany({
+          where: { companyId },
+          orderBy: {
+            dateCreated: "desc",
+          },
+        }),
+        prisma.mlClaim.count({ where: { companyId } }),
+      ]);
 
       const claimIds = storedClaims.map((claim) => String(claim.mlClaimId));
       const complementaryData = await prisma.mlClaimData.findMany({
@@ -284,12 +291,10 @@ export async function GET(request: Request) {
           offset: 0,
           limit: mergedClaims.length,
         },
+        lastUpdatedAt: getLastUpdatedAt(storedClaims, complementaryData),
+        totalDb,
       };
 
-      claimsCache.set(cacheKey, {
-        expiresAt: Date.now() + CACHE_TTL_MS,
-        payload: { claims: claims.data || [], paging: claims.paging || {} },
-      });
     } catch (mlError) {
       console.error("[ML Claims API] Erro ao chamar API ML:", mlError);
 
@@ -352,8 +357,8 @@ export async function GET(request: Request) {
       connected: true,
       claims: claims.data || claims.results || claims || [],
       paging: claims.paging || {},
-      cached: false,
-      source: "api",
+      lastUpdatedAt: claims.lastUpdatedAt || null,
+      totalDb: claims.totalDb ?? null,
     });
   } catch (error) {
     console.error("[ML Claims API] Erro geral:", error);
