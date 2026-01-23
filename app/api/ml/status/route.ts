@@ -53,6 +53,17 @@ export async function GET() {
       }
     }
 
+    if (!mlAccount) {
+      return NextResponse.json({
+        connected: false,
+        error: 'Nenhuma conta do Mercado Livre conectada',
+        details: {
+          companyId,
+          hasAccount: false,
+        },
+      });
+    }
+
     return NextResponse.json({
       connected: !isExpired,
       details: {
