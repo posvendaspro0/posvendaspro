@@ -145,7 +145,8 @@ export async function GET(request: Request) {
         );
 
         const mergedClaims = storedClaims.map((claim) => {
-          const raw = claim.raw || {};
+          const raw =
+            claim.raw && typeof claim.raw === "object" ? claim.raw : {};
           const extra = dataMap.get(String(claim.mlClaimId)) as any;
           return {
             ...raw,
@@ -254,7 +255,8 @@ export async function GET(request: Request) {
       );
 
       const mergedClaims = storedClaims.map((claim) => {
-        const raw = claim.raw || {};
+        const raw =
+          claim.raw && typeof claim.raw === "object" ? claim.raw : {};
         const extra = dataMap.get(String(claim.mlClaimId)) as any;
         return {
           ...raw,
