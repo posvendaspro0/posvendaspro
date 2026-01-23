@@ -148,6 +148,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [hasFetched, setHasFetched] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [lastFromCache, setLastFromCache] = useState<boolean | null>(null);
+  const [lastSource, setLastSource] = useState<string | null>(null);
 
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -259,12 +260,14 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
           claims: claimsData,
           lastUpdatedAt: new Date().toISOString(),
           cached: Boolean(data.cached),
+          source: data.source || null,
         };
         localStorage.setItem("ml-claims-data", JSON.stringify(cachePayload));
         setClaims(claimsData);
         setFilteredClaims(claimsData); // Inicializar filteredClaims
         setLastUpdatedAt(new Date());
         setLastFromCache(Boolean(data.cached));
+        setLastSource(data.source || null);
         onClaimsLoaded?.(claimsData.length);
       } catch (err) {
         console.error("[ML Claims Table] Erro ao buscar claims:", err);
@@ -310,6 +313,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
           setFilteredClaims(merged);
           setLastUpdatedAt(parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null);
           setLastFromCache(Boolean(parsed.cached));
+          setLastSource(parsed.source || null);
           setHasFetched(true);
         }
       } catch {
@@ -660,7 +664,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
             {lastUpdatedAt
               ? `Última atualização: ${format(lastUpdatedAt, "dd/MM/yyyy HH:mm", {
                   locale: ptBR,
-                })}${lastFromCache ? " (cache)" : ""}`
+                })}${lastFromCache ? " (cache)" : ""}${
+                  lastSource ? ` · Fonte: ${lastSource}` : ""
+                }`
               : "Clique em “Atualizar reclamações” para buscar os dados."}
           </p>
         </div>

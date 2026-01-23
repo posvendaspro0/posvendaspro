@@ -10,6 +10,7 @@ import {
   getMlAccountByCompanyId,
 } from "@/services/mercadolivre-service";
 import { fetchAllClaims } from "@/services/claims-fetcher";
+import { persistClaims } from "@/services/ml-claims-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -153,16 +154,18 @@ export async function GET(request: Request) {
           };
         });
 
-        return NextResponse.json({
-          connected: true,
-          claims: mergedClaims,
-          paging: {
-            total: mergedClaims.length,
-            offset: 0,
-            limit: mergedClaims.length,
-          },
-          source: "db",
-        });
+        if (mergedClaims.length > 0) {
+          return NextResponse.json({
+            connected: true,
+            claims: mergedClaims,
+            paging: {
+              total: mergedClaims.length,
+              offset: 0,
+              limit: mergedClaims.length,
+            },
+            source: "db",
+          });
+        }
       }
 
       const accessToken = await getValidAccessToken(companyId);
@@ -216,143 +219,72 @@ export async function GET(request: Request) {
 
       // Persistir todas as claims puxadas (payload completo + campos chave)
       try {
-        const retentionDate = new Date();
-        retentionDate.setMonth(retentionDate.getMonth() - 12);
-
-        const chunkSize = 200;
-        for (let i = 0; i < result.claims.length; i += chunkSize) {
-          const chunk = result.claims.slice(i, i + chunkSize);
-          await Promise.all(
-            chunk.map((claim: any) => {
-              const mlClaimId = String(claim.id);
-              const resourceId = claim.resource_id
-                ? String(claim.resource_id)
-                : claim.resource?.id
-                ? String(claim.resource?.id)
-                : null;
-              const orderId = claim.order_id
-                ? String(claim.order_id)
-                : claim.resource === "order"
-                ? resourceId
-                : null;
-              const dateCreated = claim.date_created
-                ? new Date(claim.date_created)
-                : null;
-              const lastUpdated = claim.last_updated
-                ? new Date(claim.last_updated)
-                : null;
-              const dateClosed = claim.resolution?.date_created
-                ? new Date(claim.resolution.date_created)
-                : claim.date_closed
-                ? new Date(claim.date_closed)
-                : null;
-
-              return prisma.mlClaim.upsert({
-                where: {
-                  companyId_mlClaimId: {
-                    companyId,
-                    mlClaimId,
-                  },
-                },
-                update: {
-                  status: claim.status || null,
-                  stage: claim.stage || null,
-                  type: claim.type || null,
-                  resource: claim.resource || null,
-                  resourceId,
-                  orderId,
-                  reasonId: claim.reason_id || null,
-                  siteId: claim.site_id || null,
-                  dateCreated,
-                  lastUpdated,
-                  dateClosed,
-                  raw: claim,
-                },
-                create: {
-                  companyId,
-                  mlClaimId,
-                  status: claim.status || null,
-                  stage: claim.stage || null,
-                  type: claim.type || null,
-                  resource: claim.resource || null,
-                  resourceId,
-                  orderId,
-                  reasonId: claim.reason_id || null,
-                  siteId: claim.site_id || null,
-                  dateCreated,
-                  lastUpdated,
-                  dateClosed,
-                  raw: claim,
-                },
-              });
-            })
-          );
-        }
-
-        await prisma.mlClaim.deleteMany({
-          where: {
-            companyId,
-            dateCreated: {
-              lt: retentionDate,
-            },
-          },
-        });
+        await persistClaims(prisma, companyId, result.claims);
       } catch (persistError) {
         console.error("[ML Claims API] Erro ao persistir claims:", persistError);
       }
 
-      // Montar resposta
+      // Após atualizar o banco, retornar SEMPRE os dados do banco
+      const storedClaims = await prisma.mlClaim.findMany({
+        where: { companyId },
+        orderBy: {
+          dateCreated: "desc",
+        },
+      });
+
+      const claimIds = storedClaims.map((claim) => String(claim.mlClaimId));
+      const complementaryData = await prisma.mlClaimData.findMany({
+        where: {
+          companyId,
+          mlClaimId: {
+            in: claimIds,
+          },
+        },
+      });
+
+      const dataMap = new Map(
+        complementaryData.map((item) => [item.mlClaimId, item])
+      );
+
+      const mergedClaims = storedClaims.map((claim) => {
+        const raw = claim.raw || {};
+        const extra = dataMap.get(String(claim.mlClaimId)) as any;
+        return {
+          ...raw,
+          id: raw.id || claim.mlClaimId,
+          status: raw.status || claim.status,
+          stage: raw.stage || claim.stage,
+          type: raw.type || claim.type,
+          resource: raw.resource || claim.resource,
+          resource_id: raw.resource_id || claim.resourceId,
+          order_id: raw.order_id || claim.orderId,
+          reason_id: raw.reason_id || claim.reasonId,
+          site_id: raw.site_id || claim.siteId,
+          date_created: raw.date_created || claim.dateCreated,
+          last_updated: raw.last_updated || claim.lastUpdated,
+          date_closed: raw.date_closed || claim.dateClosed,
+          _complementary: extra
+            ? {
+                responsible: extra.responsible,
+                productSku: extra.productSku,
+                problemType: extra.problemType,
+                resolutionCost: extra.resolutionCost
+                  ? Number(extra.resolutionCost)
+                  : null,
+                observation: extra.observation,
+              }
+            : null,
+        };
+      });
+
       claims = {
-        data: result.claims,
+        data: mergedClaims,
         paging: {
-          total: result.totalFiltered,
+          total: mergedClaims.length,
           offset: 0,
-          limit: result.totalFiltered,
+          limit: mergedClaims.length,
         },
       };
-
-      // Buscar dados complementares do banco para cada claim
-      if (claims.data && claims.data.length > 0) {
-        const claimIds = claims.data.map((claim: any) => String(claim.id));
-
-        // Buscar todos os dados complementares de uma vez
-        const { prisma } = await import("@/lib/prisma");
-        const complementaryData = await prisma.mlClaimData.findMany({
-          where: {
-            companyId,
-            mlClaimId: {
-              in: claimIds,
-            },
-          },
-        });
-
-        // Criar um map para acesso rápido
-        const dataMap = new Map(
-          complementaryData.map((item) => [item.mlClaimId, item])
-        );
-
-        // Mesclar dados ML + dados complementares
-        claims.data = claims.data.map((claim: any) => {
-          const extra = dataMap.get(String(claim.id)) as any;
-          return {
-            ...claim,
-            // Adicionar dados complementares
-            _complementary: extra
-              ? {
-                  responsible: extra.responsible,
-                  productSku: extra.productSku,
-                  problemType: extra.problemType,
-                  resolutionCost: extra.resolutionCost
-                    ? Number(extra.resolutionCost)
-                    : null,
-                  observation: extra.observation,
-                }
-              : null,
-          };
-        });
-
-        console.log("[ML Claims API] Dados complementares mesclados");
-      }
 
       claimsCache.set(cacheKey, {
         expiresAt: Date.now() + CACHE_TTL_MS,
