@@ -5,7 +5,7 @@
  * Exibe reclamações vindas diretamente da API ML
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ import {
   AlertTriangle,
   CalendarDays,
   CalendarRange,
+  RefreshCw,
 } from "lucide-react";
 import {
   format,
@@ -138,12 +139,15 @@ const getStageColor = (stage: string): string => {
 };
 
 export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [claims, setClaims] = useState<any[]>([]);
   const [filteredClaims, setFilteredClaims] = useState<any[]>([]);
   const [showDebug, setShowDebug] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [hasFetched, setHasFetched] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [lastFromCache, setLastFromCache] = useState<boolean | null>(null);
 
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -162,14 +166,38 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    async function fetchClaims() {
+  const applyLocalEdits = useCallback((items: any[]) => {
+    try {
+      const rawEdits = localStorage.getItem("ml-claim-edits");
+      if (!rawEdits) return items;
+      const edits = JSON.parse(rawEdits);
+      return items.map((claim) => {
+        const claimId = String(claim.id);
+        const local = edits?.[claimId];
+        if (!local) return claim;
+        return {
+          ...claim,
+          _complementary: {
+            ...(claim._complementary || {}),
+            ...local,
+          },
+        };
+      });
+    } catch {
+      return items;
+    }
+  }, []);
+
+  const fetchClaims = useCallback(
+    async (forceRefresh = false) => {
       try {
         setLoading(true);
         setError(null);
 
         console.log("[ML Claims Table] Iniciando busca de reclamações...");
-        const response = await fetch("/api/ml/claims?limit=100");
+        const response = await fetch(
+          `/api/ml/claims?limit=100${forceRefresh ? "&refresh=1" : ""}`
+        );
 
         console.log("[ML Claims Table] Resposta recebida:", response.status);
         const data = await response.json();
@@ -188,6 +216,26 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
 
           setError(fullError);
           setDebugInfo(data);
+          // Se houver cache local, manter os dados em tela
+          const cached = localStorage.getItem("ml-claims-data");
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed.claims)) {
+                const merged = applyLocalEdits(parsed.claims);
+                setClaims(merged);
+                setFilteredClaims(merged);
+                setLastUpdatedAt(
+                  parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null
+                );
+                setLastFromCache(Boolean(parsed.cached));
+                onClaimsLoaded?.(merged.length);
+                return;
+              }
+            } catch {
+              localStorage.removeItem("ml-claims-data");
+            }
+          }
           setClaims([]);
           onClaimsLoaded?.(0);
           return;
@@ -205,23 +253,90 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
           "[ML Claims Table] Claims encontradas:",
           data.claims?.length || 0
         );
-        const claimsData = data.claims || [];
+        const claimsDataRaw = data.claims || [];
+        const claimsData = applyLocalEdits(claimsDataRaw);
+        const cachePayload = {
+          claims: claimsData,
+          lastUpdatedAt: new Date().toISOString(),
+          cached: Boolean(data.cached),
+        };
+        localStorage.setItem("ml-claims-data", JSON.stringify(cachePayload));
         setClaims(claimsData);
         setFilteredClaims(claimsData); // Inicializar filteredClaims
+        setLastUpdatedAt(new Date());
+        setLastFromCache(Boolean(data.cached));
         onClaimsLoaded?.(claimsData.length);
       } catch (err) {
         console.error("[ML Claims Table] Erro ao buscar claims:", err);
         setError(err instanceof Error ? err.message : "Erro desconhecido");
+        const cached = localStorage.getItem("ml-claims-data");
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed.claims)) {
+              const merged = applyLocalEdits(parsed.claims);
+              setClaims(merged);
+              setFilteredClaims(merged);
+              setLastUpdatedAt(
+                parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null
+              );
+              setLastFromCache(Boolean(parsed.cached));
+              onClaimsLoaded?.(merged.length);
+              return;
+            }
+          } catch {
+            localStorage.removeItem("ml-claims-data");
+          }
+        }
         setClaims([]);
         setFilteredClaims([]);
         onClaimsLoaded?.(0);
       } finally {
+        setHasFetched(true);
         setLoading(false);
       }
-    }
+    },
+    [applyLocalEdits, onClaimsLoaded]
+  );
 
-    fetchClaims();
-  }, [onClaimsLoaded]);
+  useEffect(() => {
+    const cached = localStorage.getItem("ml-claims-data");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed.claims)) {
+          const merged = applyLocalEdits(parsed.claims);
+          setClaims(merged);
+          setFilteredClaims(merged);
+          setLastUpdatedAt(parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null);
+          setLastFromCache(Boolean(parsed.cached));
+          setHasFetched(true);
+        }
+      } catch {
+        localStorage.removeItem("ml-claims-data");
+      }
+    }
+    fetchClaims(false);
+  }, [fetchClaims]);
+
+  useEffect(() => {
+    const shouldRefresh = localStorage.getItem('ml-claims-refresh') === '1';
+    if (shouldRefresh) {
+      localStorage.removeItem('ml-claims-refresh');
+      fetchClaims(true);
+    }
+  }, [fetchClaims]);
+
+  useEffect(() => {
+    const handleClaimsUpdated = () => {
+      fetchClaims(true);
+    };
+
+    window.addEventListener("ml-claims-updated", handleClaimsUpdated);
+    return () => {
+      window.removeEventListener("ml-claims-updated", handleClaimsUpdated);
+    };
+  }, [fetchClaims]);
 
   // Aplicar filtros e ordenação
   useEffect(() => {
@@ -451,9 +566,16 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   Integração Mercado Livre
                 </h3>
                 <p className="text-sm text-blue-700 mb-3">{error}</p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button size="sm" asChild>
                     <Link href="/dashboard/integracao">Conectar Conta ML</Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchClaims(true)}
+                  >
+                    Atualizar Agora
                   </Button>
                   <Button variant="outline" size="sm" onClick={checkStatus}>
                     Ver Detalhes Técnicos
@@ -504,56 +626,125 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
     lost: { label: "Perdida", color: "bg-red-100 text-red-800" },
   };
 
+  const statusFilterLabels: Record<string, string> = {
+    all: "Todos",
+    opened: "Aberta",
+    claim: "Reclamação",
+    dispute: "Mediação",
+    recontact: "Recontato",
+    none: "N/A",
+    stale: "ML Case",
+    closed: "Concluída",
+    lost: "Perdida",
+  };
+
+  const dateFilterLabels: Record<DateFilter, string> = {
+    all: "Todas",
+    today: "Hoje",
+    yesterday: "Ontem",
+    last7: "Últimos 7 dias",
+    last15: "Últimos 15 dias",
+    last30: "Últimos 30 dias",
+    custom: "Período personalizado",
+  };
+
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Reclamações</h1>
+          <p className="text-slate-500 mt-1">
+            Gerencie as reclamações do Mercado Livre
+          </p>
+          <p className="text-sm text-slate-600 mt-2">
+            {lastUpdatedAt
+              ? `Última atualização: ${format(lastUpdatedAt, "dd/MM/yyyy HH:mm", {
+                  locale: ptBR,
+                })}${lastFromCache ? " (cache)" : ""}`
+              : "Clique em “Atualizar reclamações” para buscar os dados."}
+          </p>
+        </div>
+        <Button
+          onClick={() => fetchClaims(true)}
+          disabled={loading}
+          className="gap-2"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Atualizar reclamações
+        </Button>
+      </div>
+
       {/* Filtros */}
       {hasAnyClaims && (
         <Card className="border-slate-200 shadow-sm">
           <CardContent className="pt-6 pb-6">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-2.5 shadow-sm">
+                <div className="rounded-md bg-slate-900 p-2 shadow-sm">
                   <Filter className="h-4 w-4 text-white" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-900 text-lg">
-                    Filtros e Ordenação
+                    Filtros e ordenação
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {filteredClaims.length} de {claims.length} reclamações
-                    encontradas
+                    Mostrando {filteredClaims.length} de {claims.length} reclamações
                   </p>
                 </div>
               </div>
+              {(searchTerm ||
+                statusFilter !== "all" ||
+                dateFilter !== "all") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setDateFilter("all");
+                    setCustomDateFrom(undefined);
+                    setCustomDateTo(undefined);
+                  }}
+                  className="h-9 text-xs"
+                >
+                  <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                  Limpar filtros
+                </Button>
+              )}
             </div>
 
             {/* Grid de Filtros */}
             <div className="space-y-4">
-              {/* Primeira Linha: Busca */}
-              <div className="space-y-2">
-                <Label
-                  htmlFor="search"
-                  className="text-sm font-semibold text-slate-700 flex items-center gap-2"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                  Buscar Reclamação
-                </Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    id="search"
-                    placeholder="Pesquisar por ID, responsável ou produto..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-11 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
+              {/* Linha 1: Busca */}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="search"
+                    className="text-sm font-semibold text-slate-700 flex items-center gap-2"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    Busca rápida
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      id="search"
+                      placeholder="ID, responsável ou produto..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 h-11 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Segunda Linha: Status, Data, Ordenar */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Filtro de Status */}
+              {/* Linha 2: Status, Ordenação, Período */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                 <div className="space-y-2">
                   <Label
                     htmlFor="status-filter"
@@ -565,7 +756,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger
                       id="status-filter"
-                      className="h-11 border-slate-300"
+                      className="h-11 border-slate-300 w-full"
                     >
                       <SelectValue placeholder="Todos os status" />
                     </SelectTrigger>
@@ -628,7 +819,53 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   </Select>
                 </div>
 
-                {/* Filtro de Data */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="sort-field"
+                    className="text-sm font-semibold text-slate-700 flex items-center gap-2"
+                  >
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                    Ordenar por
+                  </Label>
+                  <Select
+                    value={sortField}
+                    onValueChange={(value) => setSortField(value as SortField)}
+                  >
+                    <SelectTrigger
+                      id="sort-field"
+                      className="h-11 border-slate-300 w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date_created">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-3 w-3" />
+                          <span>Data de Criação</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="date_closed">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>Data de Resolução</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="status">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-3 w-3" />
+                          <span>Status</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="responsible">
+                        <div className="flex items-center gap-2">
+                          <User className="h-3 w-3" />
+                          <span>Responsável</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label
                     htmlFor="date-filter"
@@ -649,7 +886,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   >
                     <SelectTrigger
                       id="date-filter"
-                      className="h-11 border-slate-300"
+                      className="h-11 border-slate-300 w-full"
                     >
                       <SelectValue placeholder="Todas as datas" />
                     </SelectTrigger>
@@ -699,55 +936,29 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {/* Ordenação */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="sort-field"
-                    className="text-sm font-semibold text-slate-700 flex items-center gap-2"
-                  >
-                    <ArrowUpDown className="h-3.5 w-3.5" />
-                    Ordenar por
-                  </Label>
-                  <Select
-                    value={sortField}
-                    onValueChange={(value) => setSortField(value as SortField)}
-                  >
-                    <SelectTrigger
-                      id="sort-field"
-                      className="h-11 border-slate-300"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="date_created">
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon className="h-3 w-3" />
-                          <span>Data de Criação</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="date_closed">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-3 w-3" />
-                          <span>Data de Resolução</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="status">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-3 w-3" />
-                          <span>Status</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="responsible">
-                        <div className="flex items-center gap-2">
-                          <User className="h-3 w-3" />
-                          <span>Responsável</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
+
+              {(searchTerm ||
+                statusFilter !== "all" ||
+                dateFilter !== "all") && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {searchTerm && (
+                    <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
+                      Busca: {searchTerm}
+                    </Badge>
+                  )}
+                  {statusFilter !== "all" && (
+                    <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
+                      Status: {statusFilterLabels[statusFilter] || statusFilter}
+                    </Badge>
+                  )}
+                  {dateFilter !== "all" && (
+                    <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
+                      Período: {dateFilterLabels[dateFilter]}
+                    </Badge>
+                  )}
+                </div>
+              )}
 
               {/* Calendário Personalizado (se selecionado) */}
               {dateFilter === "custom" && (
@@ -845,7 +1056,7 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                 </div>
               )}
 
-              {/* Terceira Linha: Ordem e Ações */}
+              {/* Terceira Linha: Ordem */}
               <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-600 font-medium">
@@ -873,25 +1084,6 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   </Button>
                 </div>
 
-                {(searchTerm ||
-                  statusFilter !== "all" ||
-                  dateFilter !== "all") && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setStatusFilter("all");
-                      setDateFilter("all");
-                      setCustomDateFrom(undefined);
-                      setCustomDateTo(undefined);
-                    }}
-                    className="h-8 text-xs text-slate-600 hover:text-slate-900"
-                  >
-                    <XCircle className="h-3 w-3 mr-1.5" />
-                    Limpar Filtros
-                  </Button>
-                )}
               </div>
             </div>
           </CardContent>
@@ -909,8 +1101,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
               Nenhuma reclamação encontrada
             </h3>
             <p className="text-sm text-slate-600 text-center max-w-md">
-              Quando houver reclamações no Mercado Livre, elas aparecerão aqui
-              automaticamente.
+              {hasFetched
+                ? "Quando houver reclamações no Mercado Livre, elas aparecerão aqui."
+                : "Clique em “Atualizar reclamações” para buscar as informações do Mercado Livre."}
             </p>
           </CardContent>
         </Card>

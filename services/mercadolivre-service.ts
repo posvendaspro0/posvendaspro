@@ -101,13 +101,16 @@ async function mlApiCall(
   options: RequestInit = {}
 ) {
   const fullUrl = `${ML_API_URL}${endpoint}`;
+  const shouldLog = process.env.NODE_ENV !== "production";
 
-  console.log("[ML API Call] Iniciando chamada:", {
-    url: fullUrl,
-    method: options.method || "GET",
-    hasToken: !!accessToken,
-    tokenPrefix: accessToken ? accessToken.substring(0, 20) + "..." : "N/A",
-  });
+  if (shouldLog) {
+    console.log("[ML API Call] Iniciando chamada:", {
+      url: fullUrl,
+      method: options.method || "GET",
+      hasToken: !!accessToken,
+      tokenPrefix: accessToken ? accessToken.substring(0, 20) + "..." : "N/A",
+    });
+  }
 
   try {
     const response = await fetch(fullUrl, {
@@ -119,11 +122,13 @@ async function mlApiCall(
       },
     });
 
-    console.log("[ML API Call] Resposta recebida:", {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-    });
+    if (shouldLog) {
+      console.log("[ML API Call] Resposta recebida:", {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -147,10 +152,12 @@ async function mlApiCall(
     }
 
     const data = await response.json();
-    console.log("[ML API Call] Dados recebidos com sucesso:", {
-      hasData: !!data,
-      dataKeys: data ? Object.keys(data) : [],
-    });
+    if (shouldLog) {
+      console.log("[ML API Call] Dados recebidos com sucesso:", {
+        hasData: !!data,
+        dataKeys: data ? Object.keys(data) : [],
+      });
+    }
 
     return data;
   } catch (error) {
@@ -160,42 +167,6 @@ async function mlApiCall(
     });
     throw error;
   }
-}
-
-/**
- * Busca informações do usuário/vendedor
- */
-export async function getUserInfo(accessToken: string, userId: string) {
-  return mlApiCall(`/users/${userId}`, accessToken);
-}
-
-/**
- * Lista pedidos do vendedor
- */
-export async function getOrders(
-  accessToken: string,
-  userId: string,
-  filters: {
-    offset?: number;
-    limit?: number;
-    sort?: "date_asc" | "date_desc";
-  } = {}
-) {
-  const params = new URLSearchParams({
-    seller: userId,
-    offset: String(filters.offset || 0),
-    limit: String(filters.limit || 50),
-    sort: filters.sort || "date_desc",
-  });
-
-  return mlApiCall(`/orders/search?${params.toString()}`, accessToken);
-}
-
-/**
- * Busca detalhes de um pedido específico
- */
-export async function getOrder(accessToken: string, orderId: string) {
-  return mlApiCall(`/orders/${orderId}`, accessToken);
 }
 
 /**
@@ -213,6 +184,7 @@ export async function getClaims(
     connectedAt?: Date; // Data da conexão da conta ML
   } = {}
 ) {
+  const shouldLog = process.env.NODE_ENV !== "production";
   const params = new URLSearchParams({
     offset: String(filters.offset || 0),
     limit: String(filters.limit || 500), // ✅ Aumentar para 500 (máx da API ML)
@@ -224,11 +196,15 @@ export async function getClaims(
   // OBRIGATÓRIO: player_user_id (ID do usuário no ML)
   if (filters.userId) {
     params.append("player_user_id", filters.userId);
-    console.log("[ML Service] Usando player_user_id:", filters.userId);
+    if (shouldLog) {
+      console.log("[ML Service] Usando player_user_id:", filters.userId);
+    }
   } else {
-    console.warn(
-      "[ML Service] AVISO: player_user_id não fornecido! A API pode rejeitar a requisição."
-    );
+    if (shouldLog) {
+      console.warn(
+        "[ML Service] AVISO: player_user_id não fornecido! A API pode rejeitar a requisição."
+      );
+    }
   }
 
   // Adicionar site_id se fornecido (MLB = Brasil)
@@ -240,11 +216,15 @@ export async function getClaims(
   // Por padrão, NÃO filtrar por status para pegar abertas E concluídas
   if (filters.status) {
     params.append("status", filters.status);
-    console.log("[ML Service] Filtrando por status:", filters.status);
+    if (shouldLog) {
+      console.log("[ML Service] Filtrando por status:", filters.status);
+    }
   } else {
-    console.log(
-      "[ML Service] Sem filtro de status - buscando abertas E concluídas"
-    );
+    if (shouldLog) {
+      console.log(
+        "[ML Service] Sem filtro de status - buscando abertas E concluídas"
+      );
+    }
   }
 
   // 🎯 FILTRO: Data de criação >= data de conexão da conta
@@ -252,29 +232,35 @@ export async function getClaims(
     // Formato esperado pela API: YYYY-MM-DDTHH:mm:ss.sssZ (ISO 8601)
     const dateFrom = filters.connectedAt.toISOString();
     params.append("date_created.from", dateFrom);
-    console.log("[ML Service] ========================================");
-    console.log("[ML Service] ✅ FILTRO DATA ATIVO");
-    console.log("[ML Service] ========================================");
-    console.log("[ML Service] connectedAt recebido:", filters.connectedAt);
-    console.log("[ML Service] Data ISO para API ML:", dateFrom);
-    console.log("[ML Service] Filtro aplicado: date_created.from =", dateFrom);
-    console.log(
-      "[ML Service] ⚠️ API ML vai retornar APENAS claims criadas >= esta data"
-    );
-    console.log("[ML Service] ========================================");
+    if (shouldLog) {
+      console.log("[ML Service] ========================================");
+      console.log("[ML Service] ✅ FILTRO DATA ATIVO");
+      console.log("[ML Service] ========================================");
+      console.log("[ML Service] connectedAt recebido:", filters.connectedAt);
+      console.log("[ML Service] Data ISO para API ML:", dateFrom);
+      console.log("[ML Service] Filtro aplicado: date_created.from =", dateFrom);
+      console.log(
+        "[ML Service] ⚠️ API ML vai retornar APENAS claims criadas >= esta data"
+      );
+      console.log("[ML Service] ========================================");
+    }
   } else {
-    console.log("[ML Service] ========================================");
-    console.log("[ML Service] ⚠️⚠️⚠️ ATENÇÃO: FILTRO DATA INATIVO! ⚠️⚠️⚠️");
-    console.log("[ML Service] ========================================");
-    console.log("[ML Service] connectedAt NÃO fornecido!");
-    console.log("[ML Service] API ML vai retornar TODAS as claims!");
-    console.log("[ML Service] ========================================");
+    if (shouldLog) {
+      console.log("[ML Service] ========================================");
+      console.log("[ML Service] ⚠️⚠️⚠️ ATENÇÃO: FILTRO DATA INATIVO! ⚠️⚠️⚠️");
+      console.log("[ML Service] ========================================");
+      console.log("[ML Service] connectedAt NÃO fornecido!");
+      console.log("[ML Service] API ML vai retornar TODAS as claims!");
+      console.log("[ML Service] ========================================");
+    }
   }
 
-  console.log(
-    "[ML Service] 🌐 URL final:",
-    `/post-purchase/v1/claims/search?${params.toString()}`
-  );
+  if (shouldLog) {
+    console.log(
+      "[ML Service] 🌐 URL final:",
+      `/post-purchase/v1/claims/search?${params.toString()}`
+    );
+  }
 
   return mlApiCall(
     `/post-purchase/v1/claims/search?${params.toString()}`,
@@ -287,90 +273,6 @@ export async function getClaims(
  */
 export async function getClaim(accessToken: string, claimId: string) {
   return mlApiCall(`/post-purchase/v1/claims/${claimId}`, accessToken);
-}
-
-/**
- * Busca informações de envio de um pedido
- */
-export async function getShipment(accessToken: string, shipmentId: string) {
-  return mlApiCall(`/shipments/${shipmentId}`, accessToken);
-}
-
-/**
- * Lista mensagens de um pedido
- */
-export async function getMessages(accessToken: string, orderId: string) {
-  return mlApiCall(`/messages/orders/${orderId}`, accessToken);
-}
-
-/**
- * Envia mensagem para o comprador
- */
-export async function sendMessage(
-  accessToken: string,
-  orderId: string,
-  message: string
-) {
-  return mlApiCall(`/messages/orders/${orderId}`, accessToken, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      text: message,
-    }),
-  });
-}
-
-/**
- * Responde uma reclamação
- */
-export async function respondClaim(
-  accessToken: string,
-  claimId: string,
-  message: string
-) {
-  return mlApiCall(
-    `/post-purchase/v1/claims/${claimId}/messages`,
-    accessToken,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: message,
-      }),
-    }
-  );
-}
-
-/**
- * Aceita uma reclamação
- */
-export async function acceptClaim(accessToken: string, claimId: string) {
-  return mlApiCall(`/post-purchase/v1/claims/${claimId}/accept`, accessToken, {
-    method: "POST",
-  });
-}
-
-/**
- * Recusa uma reclamação
- */
-export async function declineClaim(
-  accessToken: string,
-  claimId: string,
-  reason: string
-) {
-  return mlApiCall(`/post-purchase/v1/claims/${claimId}/decline`, accessToken, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      reason,
-    }),
-  });
 }
 
 /**
@@ -417,23 +319,6 @@ export async function getClaimAffectsReputation(
     `/post-purchase/v1/claims/${claimId}/affects-reputation`,
     accessToken
   );
-}
-
-/**
- * Busca motivos disponíveis para reclamações
- */
-export async function getClaimReasons(accessToken: string, siteId: string) {
-  return mlApiCall(
-    `/post-purchase/v1/claims/reasons?site_id=${siteId}`,
-    accessToken
-  );
-}
-
-/**
- * Busca detalhes de um motivo específico
- */
-export async function getClaimReason(accessToken: string, reasonId: string) {
-  return mlApiCall(`/post-purchase/v1/claims/reasons/${reasonId}`, accessToken);
 }
 
 // ============================================

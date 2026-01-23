@@ -16,15 +16,6 @@ export default async function TicketsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Reclamações</h1>
-          <p className="text-slate-500 mt-1">
-            Gerencie as reclamações do Mercado Livre
-          </p>
-        </div>
-      </div>
-
       {/* Reclamações do Mercado Livre */}
       <MlClaimsTable />
     </div>

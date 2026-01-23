@@ -30,6 +30,8 @@ export async function fetchAllClaims(
   const startTime = Date.now();
   const { accessToken, userId, connectedAt, status } = options;
 
+  const shouldLog = process.env.NODE_ENV !== 'production';
+
   const allClaimsRaw: any[] = [];
   const connectedAtTime = connectedAt.getTime();
   
@@ -38,8 +40,10 @@ export async function fetchAllClaims(
   let pagesProcessed = 0;
   let hasMore = true;
 
-  console.log('[Claims Fetcher] 🚀 Buscando TODAS as claims');
-  console.log(`[Claims Fetcher] Filtro: claims >= ${connectedAt.toISOString()}`);
+  if (shouldLog) {
+    console.log('[Claims Fetcher] 🚀 Buscando TODAS as claims');
+    console.log(`[Claims Fetcher] Filtro: claims >= ${connectedAt.toISOString()}`);
+  }
 
   // Buscar TODAS as páginas sem limite
   while (hasMore) {
@@ -62,7 +66,7 @@ export async function fetchAllClaims(
       allClaimsRaw.push(...response.data);
 
       // Log a cada 10 páginas para não poluir console
-      if (pagesProcessed % 10 === 0) {
+      if (shouldLog && pagesProcessed % 10 === 0) {
         console.log(
           `[Claims Fetcher] Página ${pagesProcessed}: ${allClaimsRaw.length} claims acumuladas`
         );
@@ -80,18 +84,20 @@ export async function fetchAllClaims(
     }
   }
 
-  console.log('[Claims Fetcher] ========================================');
-  console.log('[Claims Fetcher] 📊 BUSCA COMPLETA');
-  console.log('[Claims Fetcher] ========================================');
-  console.log(`[Claims Fetcher] Total buscado: ${allClaimsRaw.length} claims`);
-  console.log(`[Claims Fetcher] Páginas processadas: ${pagesProcessed}`);
+  if (shouldLog) {
+    console.log('[Claims Fetcher] ========================================');
+    console.log('[Claims Fetcher] 📊 BUSCA COMPLETA');
+    console.log('[Claims Fetcher] ========================================');
+    console.log(`[Claims Fetcher] Total buscado: ${allClaimsRaw.length} claims`);
+    console.log(`[Claims Fetcher] Páginas processadas: ${pagesProcessed}`);
+  }
 
   // Remover duplicatas (por ID)
   const uniqueClaims = Array.from(
     new Map(allClaimsRaw.map((claim: any) => [claim.id, claim])).values()
   );
 
-  if (uniqueClaims.length < allClaimsRaw.length) {
+  if (shouldLog && uniqueClaims.length < allClaimsRaw.length) {
     console.log(
       `[Claims Fetcher] ⚠️ Duplicatas removidas: ${allClaimsRaw.length - uniqueClaims.length}`
     );
@@ -105,13 +111,15 @@ export async function fetchAllClaims(
 
   const duration = Date.now() - startTime;
 
-  console.log('[Claims Fetcher] ========================================');
-  console.log('[Claims Fetcher] 🔍 FILTRO APLICADO');
-  console.log('[Claims Fetcher] ========================================');
-  console.log(`[Claims Fetcher] Claims filtradas: ${filteredClaims.length}`);
-  console.log(`[Claims Fetcher] Claims removidas: ${allClaimsRaw.length - filteredClaims.length}`);
-  console.log(`[Claims Fetcher] Tempo total: ${(duration / 1000).toFixed(2)}s`);
-  console.log('[Claims Fetcher] ========================================');
+  if (shouldLog) {
+    console.log('[Claims Fetcher] ========================================');
+    console.log('[Claims Fetcher] 🔍 FILTRO APLICADO');
+    console.log('[Claims Fetcher] ========================================');
+    console.log(`[Claims Fetcher] Claims filtradas: ${filteredClaims.length}`);
+    console.log(`[Claims Fetcher] Claims removidas: ${allClaimsRaw.length - filteredClaims.length}`);
+    console.log(`[Claims Fetcher] Tempo total: ${(duration / 1000).toFixed(2)}s`);
+    console.log('[Claims Fetcher] ========================================');
+  }
 
   return {
     claims: filteredClaims,

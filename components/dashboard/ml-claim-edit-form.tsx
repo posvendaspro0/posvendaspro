@@ -120,6 +120,25 @@ export function MlClaimEditForm({ companyId, mlClaimId, mlOrderId }: MlClaimEdit
 
       console.log('[ML Claim Edit Form] Salvo com sucesso:', result);
       setSuccess(true);
+      // Salva alterações localmente para refletir na tabela ao voltar
+      try {
+        const rawEdits = localStorage.getItem('ml-claim-edits');
+        const edits = rawEdits ? JSON.parse(rawEdits) : {};
+        edits[String(mlClaimId)] = {
+          responsible: payload.responsible,
+          productSku: payload.productSku,
+          problemType: payload.problemType,
+          resolutionCost: payload.resolutionCost,
+          observation: payload.observation,
+        };
+        localStorage.setItem('ml-claim-edits', JSON.stringify(edits));
+      } catch (err) {
+        console.warn('[ML Claim Edit Form] Falha ao salvar cache local:', err);
+      }
+      // Atualiza o cache da listagem para refletir os dados editados
+      await fetch('/api/ml/claims?refresh=1', { cache: 'no-store' });
+      localStorage.setItem('ml-claims-refresh', '1');
+      window.dispatchEvent(new Event('ml-claims-updated'));
       router.refresh();
 
       // Limpar mensagem de sucesso após 3s

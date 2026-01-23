@@ -5,10 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
-  Building2, 
-  Users, 
-  Settings,
-  BarChart3
+  Building2
 } from 'lucide-react';
 
 /**
@@ -26,21 +23,6 @@ const navigation = [
     name: 'Empresas',
     href: '/admin/empresas',
     icon: Building2,
-  },
-  {
-    name: 'Usuários',
-    href: '/admin/usuarios',
-    icon: Users,
-  },
-  {
-    name: 'Relatórios',
-    href: '/admin/relatorios',
-    icon: BarChart3,
-  },
-  {
-    name: 'Configurações',
-    href: '/admin/configuracoes',
-    icon: Settings,
   },
 ];
 
