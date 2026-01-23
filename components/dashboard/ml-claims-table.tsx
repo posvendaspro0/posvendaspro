@@ -1434,6 +1434,24 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                     </Button>
                   </TableHead>
                   <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Produto
+                    </div>
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Problema
+                    </div>
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      Custo
+                    </div>
+                  </TableHead>
+                  <TableHead className="font-semibold">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1448,18 +1466,6 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                     </Button>
                   </TableHead>
                   <TableHead className="font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4" />
-                      Produto
-                    </div>
-                  </TableHead>
-                  <TableHead className="font-semibold">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      Problema
-                    </div>
-                  </TableHead>
-                  <TableHead className="font-semibold">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1470,12 +1476,6 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                       Resolução
                       <span className="ml-2">{getSortIcon("date_closed")}</span>
                     </Button>
-                  </TableHead>
-                  <TableHead className="font-semibold">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
-                      Custo
-                    </div>
                   </TableHead>
                   <TableHead className="font-semibold">
                     <div className="flex items-center gap-2">
@@ -1687,22 +1687,6 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                         </div>
                       </TableCell>
 
-                      {/* Data Reclamação */}
-                      <TableCell>
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <CalendarIcon className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span className="text-sm text-slate-600">
-                            {claim.date_created
-                              ? format(
-                                  new Date(claim.date_created),
-                                  "dd/MM/yyyy HH:mm",
-                                  { locale: ptBR }
-                                )
-                              : "-"}
-                          </span>
-                        </div>
-                      </TableCell>
-
                       {/* Produto (SKU) */}
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -1726,6 +1710,40 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                         </div>
                       </TableCell>
 
+                      {/* Custo Resolução */}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-3.5 w-3.5 text-green-600" />
+                          <span className="text-sm text-slate-700 font-medium">
+                            {claim._complementary?.resolutionCost ? (
+                              `R$ ${Number(
+                                claim._complementary.resolutionCost
+                              ).toFixed(2)}`
+                            ) : claim.resolution_amount ? (
+                              `R$ ${Number(claim.resolution_amount).toFixed(2)}`
+                            ) : (
+                              <span className="text-slate-400">R$ 0,00</span>
+                            )}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Data Criação */}
+                      <TableCell>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <CalendarIcon className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                          <span className="text-sm text-slate-600">
+                            {claim.date_created
+                              ? format(
+                                  new Date(claim.date_created),
+                                  "dd/MM/yyyy HH:mm",
+                                  { locale: ptBR }
+                                )
+                              : "-"}
+                          </span>
+                        </div>
+                      </TableCell>
+
                       {/* Data Resolução */}
                       <TableCell>
                         <div className="flex items-center gap-2 whitespace-nowrap">
@@ -1741,24 +1759,6 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                               )
                             ) : (
                               <span className="text-slate-400">-</span>
-                            )}
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      {/* Custo Resolução */}
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-3.5 w-3.5 text-green-600" />
-                          <span className="text-sm text-slate-700 font-medium">
-                            {claim._complementary?.resolutionCost ? (
-                              `R$ ${Number(
-                                claim._complementary.resolutionCost
-                              ).toFixed(2)}`
-                            ) : claim.resolution_amount ? (
-                              `R$ ${Number(claim.resolution_amount).toFixed(2)}`
-                            ) : (
-                              <span className="text-slate-400">R$ 0,00</span>
                             )}
                           </span>
                         </div>
