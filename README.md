@@ -157,7 +157,6 @@ posvendaspro/
 │   │   ├── tickets/              # Gestão de Tickets
 │   │   ├── operadores/           # Gestão de Operadores
 │   │   ├── perfil/               # Perfil Completo
-│   │   ├── relatorios/           # (Em breve)
 │   │   └── integracao/           # (Em breve)
 │   ├── cadastro/                 # Página de cadastro
 │   ├── login/                    # Página de login

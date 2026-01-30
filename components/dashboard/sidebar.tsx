@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
   AlertCircle, 
-  BarChart3,
   Link as LinkIcon,
   Users
 } from 'lucide-react';
@@ -31,11 +30,6 @@ const navigation = [
     name: 'Operadores',
     href: '/dashboard/operadores',
     icon: Users,
-  },
-  {
-    name: 'Relatórios',
-    href: '/dashboard/relatorios',
-    icon: BarChart3,
   },
   {
     name: 'Integração ML',
