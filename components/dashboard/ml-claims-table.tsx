@@ -345,32 +345,29 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   );
 
   const router = useRouter();
-  const fetchConnectionStatus = useCallback(
-    async (showDetails = false) => {
-      try {
-        const response = await fetch("/api/ml/status", {
-          cache: "no-store",
-          headers: {
-            "Cache-Control": "no-store",
-          },
-        });
-        const data = await response.json();
-        setConnectionStatus({
-          connected: Boolean(data?.connected),
-          isExpired: Boolean(data?.details?.isExpired),
-          timeUntilExpiry: data?.details?.timeUntilExpiry,
-          mercadoLivreUserId: data?.details?.mercadoLivreUserId,
-        });
-        if (showDetails) {
-          setDebugInfo(data);
-          setShowDebug(true);
-        }
-      } catch (err) {
-        console.error("Erro ao verificar status:", err);
+  const fetchConnectionStatus = useCallback(async (showDetails = false) => {
+    try {
+      const response = await fetch("/api/ml/status", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      });
+      const data = await response.json();
+      setConnectionStatus({
+        connected: Boolean(data?.connected),
+        isExpired: Boolean(data?.details?.isExpired),
+        timeUntilExpiry: data?.details?.timeUntilExpiry,
+        mercadoLivreUserId: data?.details?.mercadoLivreUserId,
+      });
+      if (showDetails) {
+        setDebugInfo(data);
+        setShowDebug(true);
       }
-    },
-    []
-  );
+    } catch (err) {
+      console.error("Erro ao verificar status:", err);
+    }
+  }, []);
 
   useEffect(() => {
     if (!refreshNotice) return;
@@ -388,9 +385,9 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
   }, [fetchClaims, fetchConnectionStatus]);
 
   useEffect(() => {
-    const shouldRefresh = localStorage.getItem('ml-claims-refresh') === '1';
+    const shouldRefresh = localStorage.getItem("ml-claims-refresh") === "1";
     if (shouldRefresh) {
-      localStorage.removeItem('ml-claims-refresh');
+      localStorage.removeItem("ml-claims-refresh");
       fetchClaims(true, true);
     }
   }, [fetchClaims]);
@@ -790,9 +787,13 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
           </p>
           <p className="text-sm text-slate-600">
             {lastUpdatedAt
-              ? `Última atualização: ${format(lastUpdatedAt, "dd/MM/yyyy HH:mm", {
-                  locale: ptBR,
-                })}`
+              ? `Última atualização: ${format(
+                  lastUpdatedAt,
+                  "dd/MM/yyyy HH:mm",
+                  {
+                    locale: ptBR,
+                  }
+                )}`
               : "Clique em “Atualizar reclamações” para buscar os dados."}
           </p>
           {refreshNotice && (
@@ -897,8 +898,8 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                   </Select>
                 </div>
                 {(searchTerm ||
-                statusFilter !== "all" ||
-                dateFilter !== "all") && (
+                  statusFilter !== "all" ||
+                  dateFilter !== "all") && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -1344,7 +1345,6 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
                     )}
                   </Button>
                 </div>
-
               </div>
             </div>
           </CardContent>
@@ -1873,7 +1873,6 @@ export function MlClaimsTable({ onClaimsLoaded }: MlClaimsTableProps) {
           )}
         </Card>
       )}
-
     </div>
   );
 }

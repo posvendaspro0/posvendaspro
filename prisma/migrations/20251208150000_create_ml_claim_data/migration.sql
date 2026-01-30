@@ -1,4 +1,4 @@
--- CreateTable
+gh auth login-- CreateTable
 CREATE TABLE "ml_claim_data" (
     "id" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,

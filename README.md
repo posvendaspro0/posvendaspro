@@ -11,6 +11,7 @@ Sistema profissional de gerenciamento de tickets (reclamações) para empresas q
 _Última atualização do README: manutenção rápida._
 
 ### **Frontend**
+
 - ⚛️ **Next.js 15** - App Router
 - 🎨 **React 19** - UI Components
 - 🔷 **TypeScript** - Type Safety
@@ -20,6 +21,7 @@ _Última atualização do README: manutenção rápida._
 - ✅ **Zod** - Validação
 
 ### **Backend**
+
 - 🔒 **NextAuth.js v5** - Autenticação
 - 🗄️ **Prisma ORM** - Database
 - 🐘 **PostgreSQL (Neon)** - Cloud Database
@@ -27,6 +29,7 @@ _Última atualização do README: manutenção rápida._
 - 🔑 **JWT** - Token Management
 
 ### **Infraestrutura**
+
 - ☁️ **Vercel** - Deployment & Hosting
 - 🌐 **GitHub** - Version Control
 
@@ -35,6 +38,7 @@ _Última atualização do README: manutenção rápida._
 ## 📋 **Funcionalidades Principais**
 
 ### ✅ **Autenticação e Autorização**
+
 - Login seguro com NextAuth.js v5
 - Dois níveis de acesso:
   - **ADMIN**: Super administrador do sistema
@@ -43,6 +47,7 @@ _Última atualização do README: manutenção rápida._
 - Multi-tenancy (isolamento de dados por empresa)
 
 ### ✅ **Gestão de Tickets**
+
 - CRUD completo de tickets de reclamação
 - Campos: ID, Status, Responsável, Data da Reclamação, SKU do Produto, Tipo de Problema, Observação, Data de Resolução, Custo, Afetou Reputação
 - Cálculo automático do tempo de resolução
@@ -50,12 +55,14 @@ _Última atualização do README: manutenção rápida._
 - Interface intuitiva com tabelas responsivas
 
 ### ✅ **Gestão de Operadores**
+
 - CRUD de operadores por empresa
 - Controle de acesso e permissões
 - Ativação/Desativação de contas
 - Senhas criptografadas com bcrypt
 
 ### ✅ **Perfil Completo**
+
 - Dados pessoais do usuário
 - Dados da empresa (CNPJ, endereço completo)
 - Alteração de senha
@@ -64,6 +71,7 @@ _Última atualização do README: manutenção rápida._
 - Busca automática de endereço via ViaCEP
 
 ### 🔜 **Em Desenvolvimento**
+
 - **Relatórios**: Análise de tendências, tempo de resolução, etc.
 - **Integração Mercado Livre**: Importação automática de reclamações
 - **Notificações**: Email via Brevo (transactional)
@@ -109,6 +117,7 @@ NEXTAUTH_SECRET="sua_chave_secreta_forte_aqui"
 ```
 
 **Gerar NEXTAUTH_SECRET:**
+
 ```bash
 openssl rand -base64 32
 ```
@@ -127,6 +136,7 @@ npx prisma db seed
 ```
 
 **Credenciais do Admin Padrão:**
+
 - Email: `admin@posvendas.com`
 - Senha: `Admin@123456`
 
@@ -157,6 +167,7 @@ posvendaspro/
 │   │   ├── tickets/              # Gestão de Tickets
 │   │   ├── operadores/           # Gestão de Operadores
 │   │   ├── perfil/               # Perfil Completo
+│   │   ├── relatorios/           # (Em breve)
 │   │   └── integracao/           # (Em breve)
 │   ├── cadastro/                 # Página de cadastro
 │   ├── login/                    # Página de login
@@ -206,6 +217,7 @@ posvendaspro/
 ## 📊 **Banco de Dados**
 
 ### **Models:**
+
 - `User` - Usuários do sistema
 - `Company` - Empresas cadastradas
 - `MlAccount` - Contas Mercado Livre (futuro)
@@ -213,6 +225,7 @@ posvendaspro/
 - `Operator` - Operadores por empresa
 
 ### **Relações:**
+
 - Um `User` pertence a uma `Company`
 - Uma `Company` possui vários `Users`, `Operators`, `Tickets` e `MlAccounts`
 - Cascade delete para manter integridade referencial
@@ -296,6 +309,7 @@ Proprietary - Todos os direitos reservados © 2024 PosVendas Pro
 ## 👨‍💻 **Suporte**
 
 Para dúvidas ou problemas, entre em contato:
+
 - **Email**: suporte@posvendaspro.com
 - **GitHub Issues**: https://github.com/posvendaspro0/posvendaspro/issues
 
@@ -306,6 +320,7 @@ Para dúvidas ou problemas, entre em contato:
 ✅ **MVP Completo e Funcional**
 
 Próximas Releases:
+
 - 📊 Sistema de Relatórios
 - 🔗 Integração Mercado Livre API
 - 📧 Notificações por Email (Brevo)

@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  AlertCircle, 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
+  AlertCircle,
+  BarChart3,
   Link as LinkIcon,
-  Users
-} from 'lucide-react';
+  Users,
+} from "lucide-react";
 
 /**
  * Sidebar do Dashboard CLIENT
@@ -17,23 +18,28 @@ import {
 
 const navigation = [
   {
-    name: 'Dashboard',
-    href: '/dashboard',
+    name: "Dashboard",
+    href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: 'Tickets',
-    href: '/dashboard/tickets',
+    name: "Tickets",
+    href: "/dashboard/tickets",
     icon: AlertCircle,
   },
   {
-    name: 'Operadores',
-    href: '/dashboard/operadores',
+    name: "Operadores",
+    href: "/dashboard/operadores",
     icon: Users,
   },
   {
-    name: 'Integração ML',
-    href: '/dashboard/integracao',
+    name: "Relatórios",
+    href: "/dashboard/relatorios",
+    icon: BarChart3,
+  },
+  {
+    name: "Integração ML",
+    href: "/dashboard/integracao",
     icon: LinkIcon,
   },
 ];
@@ -46,22 +52,23 @@ export function DashboardSidebar() {
       <div className="flex h-16 items-center px-6 border-b border-slate-800">
         <h1 className="text-xl font-bold">PósVendas Pro</h1>
       </div>
-      
+
       <nav className="flex-1 min-h-0 space-y-1 px-3 py-4 overflow-y-auto overscroll-contain">
         {navigation.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || 
-            (item.href !== '/dashboard' && pathname.startsWith(item.href));
-          
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
           return (
             <Link
               key={item.name}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                 isActive
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
               )}
             >
               <Icon className="h-5 w-5" />
@@ -70,13 +77,10 @@ export function DashboardSidebar() {
           );
         })}
       </nav>
-      
+
       <div className="border-t border-slate-800 p-4">
-        <p className="text-xs text-slate-400 text-center">
-          Dashboard Cliente
-        </p>
+        <p className="text-xs text-slate-400 text-center">Dashboard Cliente</p>
       </div>
     </div>
   );
 }
-
